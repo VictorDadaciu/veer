@@ -35,4 +35,6 @@ if (${VEER_FOUND})
         PRIVATE
         veer::veer
     )
+    
+    add_dependencies(arena veer_forced_install)
 endif()

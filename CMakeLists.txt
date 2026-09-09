@@ -70,11 +70,6 @@ if (${VEER_INSTALL})
     )
 endif()
 
-option(VEER_TESTS ON)
-if (${VEER_TESTS})
-    add_subdirectory(tests)
-endif()
-
 if (${VEER_IS_TOP_LEVEL})
     add_custom_target(
         veer_forced_install ALL
@@ -87,9 +82,10 @@ if (${VEER_IS_TOP_LEVEL})
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
     add_dependencies(veer_forced_install ${VEER_COMPONENTS})
+endif()
+
+option(VEER_TESTS ON)
+if (${VEER_TESTS})
     add_subdirectory(tests)
-    if ($VEER_FOUND)
-        add_dependencies(arena veer_forced_install)
-    endif()
 endif()
 
