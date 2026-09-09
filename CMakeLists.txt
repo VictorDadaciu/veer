@@ -1,0 +1,95 @@
+cmake_minimum_required(VERSION 3.21..4.4)
+
+project(
+    veer
+    VERSION 0.0.1
+    DESCRIPTION "ECS engine whatever"
+    LANGUAGES C CXX
+)
+
+if (PROJECT_IS_TOP_LEVEL)
+    set(VEER_IS_TOP_LEVEL ON)
+endif()
+
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(${PROJECT_SOURCE_DIR}/cmake/submodules.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/utils.cmake)
+
+find_package(Vulkan REQUIRED)
+
+add_library(veer INTERFACE)
+
+set_property(TARGET veer
+    PROPERTY CXX_STANDARD 26
+)
+
+set(
+    VEER_COMPONENTS
+        core
+        render
+)
+
+foreach(VEER_COMPONENT ${VEER_COMPONENTS})
+    add_subdirectory(${VEER_COMPONENT})
+endforeach()
+
+target_link_libraries(
+    veer
+    INTERFACE
+        ${VEER_COMPONENTS}
+)
+
+target_include_directories(veer
+    INTERFACE
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/veer>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/veer/extern>
+)
+
+option(VEER_INSTALL "Install veer" ${VEER_IS_TOP_LEVEL})
+if (${VEER_INSTALL})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/veerConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/veerConfig.cmake
+        COPYONLY
+    )
+    install(TARGETS veer ${VEER_COMPONENTS}
+        EXPORT veerTargets
+    )
+    install(EXPORT veerTargets
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/veer/cmake
+        NAMESPACE veer::
+    )
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/veerConfig.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/veer/cmake
+    )
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/glm/glm
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/veer/extern
+    )
+    export(TARGETS veer ${VEER_COMPONENTS}
+        NAMESPACE veer::
+        FILE veerTargets.cmake
+    )
+endif()
+
+option(VEER_TESTS ON)
+if (${VEER_TESTS})
+    add_subdirectory(tests)
+endif()
+
+if (${VEER_IS_TOP_LEVEL})
+    add_custom_target(
+        veer_forced_install ALL
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__dummy_file
+    )
+    add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/__dummy_file
+        COMMENT "Installing veer to ~/.local"
+        COMMAND ./do_install.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+    add_dependencies(veer_forced_install ${VEER_COMPONENTS})
+    add_subdirectory(tests)
+    if ($VEER_FOUND)
+        add_dependencies(arena veer_forced_install)
+    endif()
+endif()
+
