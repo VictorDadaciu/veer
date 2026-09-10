@@ -8,6 +8,7 @@ project(
 )
 
 if (PROJECT_IS_TOP_LEVEL)
+    message("Veer is the top-level project")
     set(VEER_IS_TOP_LEVEL ON)
 endif()
 
@@ -16,6 +17,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/submodules.cmake)
 include(${PROJECT_SOURCE_DIR}/cmake/utils.cmake)
 
 find_package(Vulkan REQUIRED)
+find_package(slang REQUIRED)
 
 add_library(veer INTERFACE)
 
@@ -25,8 +27,8 @@ set_property(TARGET veer
 
 set(
     VEER_COMPONENTS
-        core
-        render
+        veer_core
+        veer_render
 )
 
 foreach(VEER_COMPONENT ${VEER_COMPONENTS})
@@ -47,6 +49,7 @@ target_include_directories(veer
 
 option(VEER_INSTALL "Install veer" ${VEER_IS_TOP_LEVEL})
 if (${VEER_INSTALL})
+    message("Configuring veer install...")
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/veerConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/veerConfig.cmake
         COPYONLY
@@ -71,6 +74,7 @@ if (${VEER_INSTALL})
 endif()
 
 if (${VEER_IS_TOP_LEVEL})
+    message("Will install veer after build")
     add_custom_target(
         veer_forced_install ALL
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/__dummy_file
@@ -84,8 +88,9 @@ if (${VEER_IS_TOP_LEVEL})
     add_dependencies(veer_forced_install ${VEER_COMPONENTS})
 endif()
 
-option(VEER_TESTS ON)
+option(VEER_TESTS "Build tests" ON)
 if (${VEER_TESTS})
+    message("Configuring veer tests...")
     add_subdirectory(tests)
 endif()
 

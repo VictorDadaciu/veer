@@ -8,25 +8,8 @@ vk_context context;
 
 error_code vk_frame_context::init()
 {
-    if (command_pool) return error_code::already_initialized;
-
-    VkCommandPoolCreateInfo command_pool_create_info{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-        .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-        .queueFamilyIndex = context.device.queue.family
-    };
-
-    if (FAILED(vkCreateCommandPool(context.device.vk, &command_pool_create_info, nullptr, &command_pool)))
-        return error(error_code::initialization, "Failed to initialize command pool");
-
-    VkCommandBufferAllocateInfo command_buffer_allocate_info{
-        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-        .commandPool = command_pool,
-        .commandBufferCount = 1
-    };
-
-    if (FAILED(vkAllocateCommandBuffers(context.device.vk, &command_buffer_allocate_info, &command_buffer)))
-        return error(error_code::allocation, "Failed to allocate command buffer");
+    SAFE_JUST_INIT(pool);
+    SAFE_HANDLE_EXPECTED(command_buffer, pool.allocate_cmd_buffer());
 
     VkSemaphoreCreateInfo semaphore_create_info{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
@@ -46,11 +29,9 @@ error_code vk_frame_context::init()
 
 void vk_frame_context::destroy()
 {
-    if (!command_pool) return;
     vkDestroySemaphore(context.device.vk, image_acquired_semaphore, nullptr);
     vkDestroyFence(context.device.vk, render_start_fence, nullptr);
-    vkDestroyCommandPool(context.device.vk, command_pool, nullptr);
-    command_pool = nullptr;
+    pool.destroy();
 }
 
 error_code vk_context::init()

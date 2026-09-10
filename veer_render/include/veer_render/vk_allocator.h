@@ -3,19 +3,18 @@
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
-#include <vulkan/vulkan_core.h>
-
+struct VmaAllocator_T;
 namespace ve
 {
-struct vk_instance
+struct vk_allocator
 {
-    DECLARE_SINGLE_COPY(vk_instance);
+    DECLARE_NO_COPY_NO_MOVE(vk_allocator);
 
     error_code init();
     void destroy();
 
-    ~vk_instance() = default;
+    ~vk_allocator() = default;
 
-    VkInstance vk{};
+    VmaAllocator_T* vk{};
 };
 }

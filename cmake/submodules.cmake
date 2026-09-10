@@ -38,4 +38,3 @@ add_subdirectory(extern/SDL3)
 set(GLM_ENABLE_CXX_20 ON)
 set(GLM_BUILD_SHARED_LIBS OFF)
 add_subdirectory(extern/glm)
-

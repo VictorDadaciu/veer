@@ -23,7 +23,7 @@ struct vk_physical_device
 struct vk_device
 {
     
-    DECLARE_SINGLE_COPY(vk_device);
+    DECLARE_NO_COPY_NO_MOVE(vk_device);
 
     error_code init();
     void destroy();

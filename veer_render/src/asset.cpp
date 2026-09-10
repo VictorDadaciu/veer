@@ -17,7 +17,7 @@ struct gltf_model_wrapper : public tg3_model
 
     error_code load(const std::filesystem::path& path) noexcept
     {
-        std::string path_str = path.string();
+        std::string path_str = path.display_string();
         trace("Processing as gltf file...");
         
         tg3_error_stack errs;
@@ -156,7 +156,7 @@ struct asset_manager
         std::vector<asset_load_metadata> res{};
         {
             gltf_model_wrapper model{};
-            SAFE_CALL_EXPECTED(model.load(path));
+            SAFE_RETURN_EXPECTED(model.load(path));
             if (model.meshes_count == 0)
                 return std::unexpected(error(error_code::file_read, "Asset file \"{}\" is invalid: has no meshes", path));
 
@@ -191,7 +191,7 @@ asset_load_return_t load(const std::filesystem::path& path)
 {
     if (!std::filesystem::exists(path))
         return std::unexpected(error(error_code::file_not_exists, "Asset file \"{}\" doesn't exist", path));
-    std::string extension = path.extension().string();
+    std::string extension = path.extension().display_string();
     info("Loading asset file at \"{}\"...", path);
     if (extension == ".glb" || extension == ".gltf")
     {

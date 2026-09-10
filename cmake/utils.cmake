@@ -19,7 +19,7 @@ endfunction()
 function(veer_include_directories TARGET)
     target_include_directories(${TARGET}
     PRIVATE
-        include/veer_${TARGET}
+        include/${TARGET}
     INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
@@ -27,7 +27,7 @@ endfunction()
 
 include(GNUInstallDirs)
 function(veer_target_install TARGET)
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/veer_${TARGET}
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${TARGET}
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/veer
     )
 endfunction()

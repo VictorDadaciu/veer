@@ -11,15 +11,15 @@ set(VEER_CORE_HEADERS
     include/veer_core/utils.h
 )
 
-add_library(core STATIC
+add_library(veer_core STATIC
     ${VEER_CORE_SOURCES}
     ${VEER_CORE_HEADERS}
 )
 
 target_include_directories(
-    core
+    veer_core
     PRIVATE
         ../extern/glm
 )
 
-veer_target_common(core)
+veer_target_common(veer_core)

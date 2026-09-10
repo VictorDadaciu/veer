@@ -8,3 +8,4 @@ Example found in ./tests/arena.
 
 Can only be built with GCC16 for now since it is the only compiler that currently supports reflection.
 
+cmake -DCMAKE_C_COMPILER=/opt/gcc-16.2/bin/gcc -DCMAKE_CXX_COMPILER=/opt/gcc-16.2/bin/g++ -DSLANG_ENABLE_TESTS=FALSE -DSLANG_ENABLE_EXAMPLES=FALSE -DSLANG_SLANG_LLVM_FLAVOR=DISABLE -DSLANG_USE_SYSTEM_VULKAN_HEADERS=TRUE -DSLANG_USE_SYSTEM_SPIRV_TOOLS=TRUE -DSLANG_USE_SYSTEM_SPIRV_HEADERS=TRUE --preset default

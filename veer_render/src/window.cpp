@@ -59,8 +59,7 @@ size_t window::height() const
 
 void window::close()
 {
-    c_string t = title();
-    trace("Closing window \"{}\"", t);
+    trace("Closing window \"{}\"", title());
     vkDeviceWaitIdle(context.device.vk);
     swapchain.destroy();
     surface.destroy();

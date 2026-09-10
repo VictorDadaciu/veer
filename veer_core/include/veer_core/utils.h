@@ -59,7 +59,7 @@ inline consteval bool is_template_of(std::meta::info type_r, std::meta::info tem
 }
 }
 
-#define VEER_DECLARE_SINGLE_INSTANCE(x)  \
+#define VEER_DECLARE_NO_COPY_NO_MOVE(x) \
 x() = default;                          \
 x(const x&) = delete;                   \
 x(x&&) = delete;                        \
@@ -120,8 +120,8 @@ public:                                                                    \
 }
 
 #ifndef VEER_KEEP_PREFIX
-#define DECLARE_SINGLE_COPY VEER_DECLARE_SINGLE_INSTANCE
-#define DECLARE_NO_COPY     VEER_DECLARE_NO_COPY
+#define DECLARE_NO_COPY_NO_MOVE VEER_DECLARE_NO_COPY_NO_MOVE
+#define DECLARE_NO_COPY         VEER_DECLARE_NO_COPY
 
-#define STRONG_TYPEDEF      VEER_STRONG_TYPEDEF
+#define STRONG_TYPEDEF          VEER_STRONG_TYPEDEF
 #endif

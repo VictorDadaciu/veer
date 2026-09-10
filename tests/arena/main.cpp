@@ -1,6 +1,12 @@
 #include <veer_core/log.h>
 #include <veer_core/db.h>
 
+#include <veer_render/asset.h>
+#include <veer_render/mesh.h>
+#include <veer_render/graphics.h>
+#include <veer_render/vk_shader.h>
+#include <veer_render/window.h>
+
 #include <glm/glm.hpp>
 
 DERIVE_PROP(position3, PROPERTY_ROOT(glm::vec3));
@@ -55,11 +61,9 @@ void create_attackers(size_t n)
         db::push_back(row);
     }
 }
-}
 
-int main()
+void run_db()
 {
-    ve::log::init("arena");
     create_defenders(3);
     create_attackers(15);
     ve::info("Starting battle!");
@@ -94,5 +98,53 @@ int main()
     });
 
     ve::info("Finished battle!");
+}
+
+void load_box_mesh()
+{
+    auto assets = *ve::assets::load("tests/assets/box.glb");
+    for (const auto& asset : assets)
+    {
+        ve::mesh& mesh = ve::assets::mesh(asset.index);
+        ve::trace("Loaded \"" + mesh.name() + "\"");
+        auto _ = mesh.upload_to_gpu();
+    }
+}
+
+void load_triangle_shader()
+{
+    ve::vk_shader_module shader{};
+    shader.init("tests/assets/triangle.slang");
+    shader.destroy();
+}
+
+void run_gfx()
+{
+    if (ve::gfx::init() == ve::error_code::success)
+    {
+        load_box_mesh();
+        load_triangle_shader();
+        {
+            ve::window win; 
+            auto _ = win.open("Arena");
+            static size_t it = 0;
+            while (true)
+                if (++it >= 1000)
+                    break;
+            win.close();
+        }
+        ve::assets::unload_all();
+        ve::gfx::destroy();
+    }
+}
+}
+
+int main()
+{
+    ve::log::init("arena");
+
+    run_db();
+    run_gfx();
+    
     return 0;
 }

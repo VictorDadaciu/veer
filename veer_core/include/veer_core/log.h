@@ -41,39 +41,33 @@ void error(const std::string&);
 
 #ifndef VEER_DONT_USE_FORMAT
 template<typename... args_t>
-inline void debug(std::format_string<args_t...> format_string, args_t&&... args)
+inline void debug(std::string_view format_string, args_t&&... args)
 {
-    debug(std::format(format_string, args...));
+    debug(std::format(std::dynamic_format(format_string), args...));
 }
 
 template<typename... args_t>
-inline void trace(std::format_string<args_t...> format_string, args_t&&... args)
+inline void trace(std::string_view format_string, args_t&&... args)
 {
-    trace(std::format(format_string, args...));
+    trace(std::format(std::dynamic_format(format_string), args...));
 }
 
 template<typename... args_t>
-inline void info(std::format_string<args_t...> format_string, args_t&&... args)
+inline void info(std::string_view format_string, args_t&&... args)
 {
-    info(std::format(format_string, args...));
+    info(std::format(std::dynamic_format(format_string), args...));
 }
 
 template<typename... args_t>
-inline void warn(std::format_string<args_t...> format_string, args_t&&... args)
+inline void warn(std::string_view format_string, args_t&&... args)
 {
-    warn(std::format(format_string, args...));
+    warn(std::format(std::dynamic_format(format_string), args...));
 }
 
 template<typename... args_t>
-inline void error(std::format_string<args_t...> format_string, args_t&&... args)
+[[nodiscard]] inline error_code error(error_code err, std::string_view format_string, args_t&&... args)
 {
-    error(std::format(format_string, args...));
-}
-
-template<typename... args_t>
-[[nodiscard]] inline error_code error(error_code err, std::format_string<args_t...> format_string, args_t&&... args)
-{
-    return error(err, std::format(format_string, args...));
+    return error(err, std::format(std::dynamic_format(format_string), args...));
 }
 #endif
 }
