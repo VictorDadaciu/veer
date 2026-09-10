@@ -8,5 +8,5 @@
 
 namespace ve::utils
 {
-[[nodiscard]] std::expected<byte_span, error_code> load_from_source(const std::filesystem::path&);
+[[nodiscard]] std::expected<byte_span, error_code> load(const std::filesystem::path&);
 }

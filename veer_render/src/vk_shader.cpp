@@ -13,7 +13,7 @@ namespace ve
 {
 error_code vk_shader_module::init(const std::filesystem::path& path)
 {
-    SAFE_HANDLE_EXPECTED(code, utils::load_from_source(path));
+    SAFE_HANDLE_EXPECTED(code, utils::load(path));
 
     VkShaderModuleCreateInfo shader_module_create_info{
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -29,7 +29,5 @@ error_code vk_shader_module::init(const std::filesystem::path& path)
 void vk_shader_module::destroy()
 {
     vkDestroyShaderModule(context.device.vk, vk, nullptr);
-    // ugly workaround for deleting type-erased-wise, anyway shaders will be stored differently
-    Slang::ComPtr<const ISlangBlob> dummy(reinterpret_cast<const ISlangBlob*>(code.data));
 }
 }

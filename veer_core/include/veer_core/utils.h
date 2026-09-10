@@ -7,7 +7,7 @@ namespace ve
 {
 using c_string = const char*;
 
-// these inline function should be moved to source
+// TODO: these inline function should be moved to source, maybe even to new files? eg memory_utils etc.
 static constexpr size_t cache_line_size = 64;
 inline constexpr size_t next_multiple_of_cache_line_size(size_t x)
 {
