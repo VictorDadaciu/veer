@@ -47,6 +47,27 @@ class mesh;
 class mesh_primitive
 {
 public:
+    VEER_DECLARE_NO_COPY(mesh_primitive);
+
+    mesh_primitive(mesh_primitive&& other)
+    : m_vertex_attribute_views(std::move(other.m_vertex_attribute_views)),
+    m_index_attribute_view(std::move(other.m_index_attribute_view)),
+    m_parent_index(other.m_parent_index),
+    m_render_mode(other.m_render_mode)
+    {
+        other.m_vertex_attribute_views.clear();
+    }
+
+    mesh_primitive& operator=(mesh_primitive&& other)
+    {
+        m_vertex_attribute_views = std::move(other.m_vertex_attribute_views);
+        m_index_attribute_view = std::move(other.m_index_attribute_view);
+        m_parent_index = other.m_parent_index;
+        m_render_mode = other.m_render_mode;
+        other.m_vertex_attribute_views.clear();
+        return *this;
+    }
+
     mesh& parent() const noexcept;
     bool indexed() const noexcept { return m_index_attribute_view.element_count > 0; }
 
@@ -64,6 +85,29 @@ private:
 class mesh
 {
 public:
+    VEER_DECLARE_NO_COPY(mesh);
+
+    mesh(mesh&& other)
+    : m_primitives(std::move(other.m_primitives)),
+    m_buffer_views(std::move(other.m_buffer_views)),
+    m_name(std::move(other.m_name)),
+    m_buffer(std::move(other.m_buffer))
+    {
+        other.m_primitives.clear();
+        other.m_buffer_views.clear();
+    }
+
+    mesh& operator=(mesh&& other)
+    {
+        m_primitives = std::move(other.m_primitives);
+        m_buffer_views = std::move(other.m_buffer_views);
+        m_name = std::move(other.m_name);
+        m_buffer = std::move(other.m_buffer);
+        other.m_primitives.clear();
+        other.m_buffer_views.clear();
+        return *this;
+    }
+
     std::string name() const noexcept { return m_name; }
     [[nodiscard]]
     error_code upload_to_gpu();

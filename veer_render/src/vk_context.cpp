@@ -4,12 +4,13 @@
 
 namespace ve
 {
+// TODO: add validator callbacks and stuff
 vk_context context;
 
 error_code vk_frame_context::init()
 {
     SAFE_JUST_INIT(pool);
-    SAFE_HANDLE_EXPECTED(command_buffer, pool.allocate_cmd_buffer());
+    SAFE_CALL_HANDLE_EXPECTED(command_buffer, pool.allocate_cmd_buffer());
 
     VkSemaphoreCreateInfo semaphore_create_info{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
@@ -47,9 +48,6 @@ error_code vk_context::init()
 
 void vk_context::destroy()
 {
-    if (!instance.vk) return;
-
-    vkDeviceWaitIdle(context.device.vk);
     for (auto& frame : frames)
         frame.destroy();
     allocator.destroy();

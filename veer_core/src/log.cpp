@@ -154,6 +154,12 @@ void warn(const std::string& msg)
     _log(level::warning, msg);
 }
 
+error_code warn(error_code err, const std::string& msg)
+{
+    _log(level::warning, msg);
+    return err;
+}
+
 void error(const std::string& msg)
 {
     _log(level::error, msg);

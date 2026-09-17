@@ -13,8 +13,8 @@ namespace ve
 {
 struct vk_buffer
 {
-    vk_buffer() = default;
-    vk_buffer(const vk_buffer&) = delete;
+    DECLARE_NO_COPY(vk_buffer);
+
     vk_buffer(vk_buffer&& other) :
         vk(other.vk),
         alloc(other.alloc)
@@ -22,7 +22,6 @@ struct vk_buffer
         other.vk = nullptr;
         other.alloc = nullptr;
     }
-    vk_buffer& operator=(const vk_buffer&) = delete;
     vk_buffer& operator=(vk_buffer&& other)
     {
         vk = other.vk;
@@ -32,7 +31,7 @@ struct vk_buffer
         return *this;
     }
 
-    error_code upload(const std::byte*, VkDeviceSize);
+    error_code upload(const std::byte*, VkDeviceSize, VkBufferCreateFlags, VkFlags);
     void destroy();
 
     ~vk_buffer() = default;
@@ -41,17 +40,38 @@ struct vk_buffer
     VmaAllocation_T* alloc{};
 };
 
+enum class buffer_type
+{
+    vertex,
+    index,
+    vertex_and_index,
+    image_transfer_src,
+};
+
 struct buffer
 {
-    buffer() = default;
-    buffer(const buffer&) = delete;
-    buffer(buffer&&) = default;
-    buffer& operator=(const buffer&) = delete;
-    buffer& operator=(buffer&&) = default;
+    DECLARE_NO_COPY(buffer);
 
-    error_code init(const std::byte*, size_t);
-    error_code init(const byte_span&);
-    error_code init(size_t);
+    buffer(buffer&& other)
+    : cpu(std::move(other.cpu)),
+    gpu(std::move(other.gpu)),
+    type(other.type)
+    {
+        other.cpu.invalidate();
+    }
+
+    buffer& operator=(buffer&& other)
+    {
+        cpu = std::move(other.cpu);
+        gpu = std::move(other.gpu);
+        type = other.type;
+        other.cpu.invalidate();
+        return *this;
+    }
+
+    error_code init(const std::byte*, size_t, buffer_type);
+    error_code init(const byte_span&, buffer_type);
+    error_code init(size_t, buffer_type);
     void destroy();
 
     error_code upload_to_gpu();
@@ -61,5 +81,6 @@ struct buffer
 
     byte_span cpu{};
     vk_buffer gpu{};
+    buffer_type type{};
 };
 }

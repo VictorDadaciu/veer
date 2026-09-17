@@ -4,7 +4,7 @@
 #include <veer_render/asset.h>
 #include <veer_render/mesh.h>
 #include <veer_render/graphics.h>
-#include <veer_render/vk_shader.h>
+#include <veer_render/shader.h>
 #include <veer_render/window.h>
 
 #include <glm/glm.hpp>
@@ -100,30 +100,13 @@ void run_db()
     ve::info("Finished battle!");
 }
 
-void load_box_mesh()
-{
-    auto assets = *ve::assets::load("tests/assets/box.glb");
-    for (const auto& asset : assets)
-    {
-        ve::mesh& mesh = ve::assets::mesh(asset.index);
-        ve::trace("Loaded \"" + mesh.name() + "\"");
-        auto _ = mesh.upload_to_gpu();
-    }
-}
-
-void load_triangle_shader()
-{
-    ve::vk_shader_module shader{};
-    shader.init("tests/assets/triangle.slang");
-    shader.destroy();
-}
-
 void run_gfx()
 {
     if (ve::gfx::init() == ve::error_code::success)
     {
-        load_box_mesh();
-        load_triangle_shader();
+        auto _ = ve::shader::load("tests/assets/triangle.slang");
+        auto _ = ve::assets::load("tests/assets/dog.ktx2");
+        auto _ = ve::assets::load("tests/assets/box.glb");
         {
             ve::window win; 
             auto _ = win.open("Arena");
@@ -133,7 +116,6 @@ void run_gfx()
                     break;
             win.close();
         }
-        ve::assets::unload_all();
         ve::gfx::destroy();
     }
 }

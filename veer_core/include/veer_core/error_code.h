@@ -7,15 +7,22 @@ namespace ve
 enum class error_code
 {
     success = 0,
-    initialization,
+
     allocation,
+    command_record,
     file_read,
     file_not_exists,
-    wrong_file_type,
-    window,
-    wrong_type,
+    initialization,
+    not_a_file,
     not_implemented,
+    render_submit,
     shader,
+    synchronization,
+    texture,
+    window,
+    wrong_file_type,
+    wrong_type,
+
     unknown,
 };
 }
@@ -29,29 +36,38 @@ enum class error_code
         return res;                     \
 }
 
-#define VEER_SAFE_RETURN_EXPECTED(call) \
-{                                       \
-    ve::error_code res = call;          \
-    if (res != ve::error_code::success) \
-        return std::unexpected(res);    \
-}
-
-#define VEER_SAFE_HANDLE_EXPECTED(ret, call)    \
+#define VEER_SAFE_CALL_EXPECTED(ret, call) ret; \
 {                                               \
     auto res = call;                            \
     if (!res.has_value())                       \
-        return res.error();                     \
+        return std::unexpected(res.error());    \
     ret = *res;                                 \
+}
+
+#define VEER_SAFE_CALL_RETURN_EXPECTED(call)    \
+{                                               \
+    ve::error_code res = call;                  \
+    if (res != ve::error_code::success)         \
+        return std::unexpected(res);            \
+}
+
+#define VEER_SAFE_CALL_HANDLE_EXPECTED(ret, call) ret;  \
+{                                                       \
+    auto res = call;                                    \
+    if (!res.has_value())                               \
+        return res.error();                             \
+    ret = *res;                                         \
 }
 
 #define VEER_SAFE_JUST_INIT(var, ...) VEER_SAFE_CALL(var.init(__VA_ARGS__))
 #define VEER_SAFE_INIT(var, ...) var; VEER_SAFE_JUST_INIT(var, __VA_ARGS__)
 
 #ifndef VEER_KEEP_PREFIX
-#define FAILED                  VEER_FAILED
-#define SAFE_CALL               VEER_SAFE_CALL
-#define SAFE_RETURN_EXPECTED    VEER_SAFE_RETURN_EXPECTED
-#define SAFE_HANDLE_EXPECTED    VEER_SAFE_HANDLE_EXPECTED
-#define SAFE_JUST_INIT          VEER_SAFE_JUST_INIT
-#define SAFE_INIT               VEER_SAFE_INIT
+#define FAILED                      VEER_FAILED
+#define SAFE_CALL                   VEER_SAFE_CALL
+#define SAFE_CALL_EXPECTED          VEER_SAFE_CALL_EXPECTED
+#define SAFE_CALL_RETURN_EXPECTED   VEER_SAFE_CALL_RETURN_EXPECTED
+#define SAFE_CALL_HANDLE_EXPECTED   VEER_SAFE_CALL_HANDLE_EXPECTED
+#define SAFE_INIT                   VEER_SAFE_INIT
+#define SAFE_JUST_INIT              VEER_SAFE_JUST_INIT
 #endif

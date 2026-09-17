@@ -33,8 +33,15 @@ set(SDL_STATIC ON)
 set(SDL_SHARED OFF)
 set(SDL_TEST_LIBRARY OFF)
 set(SDL_TESTS OFF)
-add_subdirectory(extern/SDL3)
+add_subdirectory(extern/SDL3 EXCLUDE_FROM_ALL)
 
 set(GLM_ENABLE_CXX_20 ON)
 set(GLM_BUILD_SHARED_LIBS OFF)
-add_subdirectory(extern/glm)
+add_subdirectory(extern/glm EXCLUDE_FROM_ALL)
+
+set(BUILD_SHARED_LIBS OFF)
+set(ASTCENC_SHAREDLIB OFF)
+add_subdirectory(extern/ktx/lib ktx EXCLUDE_FROM_ALL)
+
+add_subdirectory(extern/vma EXCLUDE_FROM_ALL)
+add_subdirectory(extern/tinygltf EXCLUDE_FROM_ALL)

@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.21..4.4)
 
 set(VEER_CORE_SOURCES
-    src/file_utils.cpp
+    src/file.cpp
     src/log.cpp
+    src/utils.cpp
 )
 
 set(VEER_CORE_HEADERS
     include/veer_core/db.h
     include/veer_core/error_code.h
-    include/veer_core/file_utils.h
+    include/veer_core/file.h
     include/veer_core/log.h
+    include/veer_core/meta_utils.h
     include/veer_core/utils.h
 )
 

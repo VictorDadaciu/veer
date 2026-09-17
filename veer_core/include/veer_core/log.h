@@ -36,6 +36,7 @@ void debug(const std::string&);
 void trace(const std::string&);
 void info(const std::string&);
 void warn(const std::string&);
+[[nodiscard]] error_code warn(error_code, const std::string&);
 void error(const std::string&);
 [[nodiscard]] error_code error(error_code, const std::string&);
 
@@ -62,6 +63,18 @@ template<typename... args_t>
 inline void warn(std::string_view format_string, args_t&&... args)
 {
     warn(std::format(std::dynamic_format(format_string), args...));
+}
+
+template<typename... args_t>
+[[nodiscard]] inline error_code warn(error_code err, std::string_view format_string, args_t&&... args)
+{
+    return warn(err, std::format(std::dynamic_format(format_string), args...));
+}
+
+template<typename... args_t>
+inline void error(std::string_view format_string, args_t&&... args)
+{
+    error(std::format(std::dynamic_format(format_string), args...));
 }
 
 template<typename... args_t>
