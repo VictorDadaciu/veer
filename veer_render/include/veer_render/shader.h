@@ -7,6 +7,13 @@
 
 namespace ve::shader
 {
+enum class stage : uint8_t
+{
+    vertex,
+    fragment,
+    unknown
+};
+
 [[nodiscard]] std::expected<size_t, error_code> load(const std::string&);
 
 void destroy_all();

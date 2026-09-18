@@ -13,10 +13,10 @@ namespace ve
 error_code vk_physical_device::init()
 {
     uint32_t device_count{0};
-    if (FAILED(vkEnumeratePhysicalDevices(context.instance.vk, &device_count, nullptr)))
+    if (FAILED(vkEnumeratePhysicalDevices(vk::context().instance.vk, &device_count, nullptr)))
         return error(error_code::initialization, "Failed to enumerate pyhysical devices");
     std::vector<VkPhysicalDevice> devices(device_count);
-    if (FAILED(vkEnumeratePhysicalDevices(context.instance.vk, &device_count, devices.data())))
+    if (FAILED(vkEnumeratePhysicalDevices(vk::context().instance.vk, &device_count, devices.data())))
         return error(error_code::initialization, "Failed to enumerate pyhysical devices");
 
     vk = devices[0];
@@ -73,12 +73,17 @@ error_code vk_device::init()
         .pEnabledFeatures = &vk_features
     };
 
-    if (FAILED(vkCreateDevice(context.physical_device.vk, &device_create_info, nullptr, &vk)))
+    if (FAILED(vkCreateDevice(vk::context().physical_device.vk, &device_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create logical device");
 
     vkGetDeviceQueue(vk, queue.family, 0, &queue.vk);
 
     return error_code::success;
+}
+
+void vk_device::wait_idle() noexcept
+{
+    vkDeviceWaitIdle(vk);
 }
 
 void vk_device::destroy()

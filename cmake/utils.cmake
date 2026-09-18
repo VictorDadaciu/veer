@@ -19,6 +19,7 @@ endfunction()
 function(veer_include_directories TARGET)
     target_include_directories(${TARGET}
     PRIVATE
+        include
         include/${TARGET}
     INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

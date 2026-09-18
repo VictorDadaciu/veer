@@ -18,10 +18,10 @@ error_code vk_allocator::init()
     };
     VmaAllocatorCreateInfo allocator_create_info{
         .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT, 
-        .physicalDevice = context.physical_device.vk,
-        .device = context.device.vk,
+        .physicalDevice = vk::context().physical_device.vk,
+        .device = vk::context().device.vk,
         .pVulkanFunctions = &vk_funcs,
-        .instance = context.instance.vk
+        .instance = vk::context().instance.vk
     };
 
     if (FAILED(vmaCreateAllocator(&allocator_create_info, &vk)))

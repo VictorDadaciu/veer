@@ -17,6 +17,10 @@ set(VEER_RENDER_SOURCES
     src/vk_surface.cpp
     src/vk_swapchain.cpp
     src/window.cpp
+
+    src/asset_manager.cpp
+    src/gltf.cpp
+    src/ktx2.cpp
 )
 
 set(VEER_RENDER_HEADERS
@@ -36,6 +40,10 @@ set(VEER_RENDER_HEADERS
     include/veer_render/vk_surface.h
     include/veer_render/vk_swapchain.h
     include/veer_render/window.h
+
+    include/internal/asset_manager.h
+    include/internal/gltf.h
+    include/internal/ktx2.h
 )
 
 add_library(veer_render STATIC

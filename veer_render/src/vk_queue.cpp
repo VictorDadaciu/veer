@@ -13,15 +13,15 @@ namespace ve
 error_code vk_queue::init()
 {
     uint32_t queue_family_count{0};
-    vkGetPhysicalDeviceQueueFamilyProperties(context.physical_device.vk, &queue_family_count, nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties(vk::context().physical_device.vk, &queue_family_count, nullptr);
     std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
-    vkGetPhysicalDeviceQueueFamilyProperties(context.physical_device.vk, &queue_family_count, queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(vk::context().physical_device.vk, &queue_family_count, queue_families.data());
 
     bool found = false;
     for (size_t i = 0; i < queue_families.size(); ++i)
     {
         if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT &&
-            !FAILED(SDL_Vulkan_GetPresentationSupport(context.instance.vk, context.physical_device.vk, i)))
+            !FAILED(SDL_Vulkan_GetPresentationSupport(vk::context().instance.vk, vk::context().physical_device.vk, i)))
         {
             family = i;
             found = true;

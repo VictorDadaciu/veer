@@ -60,7 +60,7 @@ size_t window::height() const
 void window::close()
 {
     trace("Closing window \"{}\"", title());
-    vkDeviceWaitIdle(context.device.vk);
+    vk::context().device.wait_idle();
     swapchain.destroy();
     surface.destroy();
     SDL_DestroyWindow(sdl);

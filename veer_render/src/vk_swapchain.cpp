@@ -21,13 +21,13 @@ error_code vk_swapchain_link::init(VkImage swapchain_image)
         .format = VK_FORMAT_B8G8R8A8_SRGB,
         .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}
     };
-    if (FAILED(vkCreateImageView(context.device.vk, &view_create_info, nullptr, &image_view)))
+    if (FAILED(vkCreateImageView(vk::context().device.vk, &view_create_info, nullptr, &image_view)))
         return error(error_code::initialization, "Failed to create swapchain image view");
 
     VkSemaphoreCreateInfo semaphore_create_info{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
     };
-    if (FAILED(vkCreateSemaphore(context.device.vk, &semaphore_create_info, nullptr, &render_complete_semaphore)))
+    if (FAILED(vkCreateSemaphore(vk::context().device.vk, &semaphore_create_info, nullptr, &render_complete_semaphore)))
         return error(error_code::initialization, "Failed to create semaphore");
 
     return error_code::success;
@@ -35,8 +35,8 @@ error_code vk_swapchain_link::init(VkImage swapchain_image)
 
 void vk_swapchain_link::destroy()
 {
-    vkDestroySemaphore(context.device.vk, render_complete_semaphore, nullptr);
-    vkDestroyImageView(context.device.vk, image_view, nullptr);
+    vkDestroySemaphore(vk::context().device.vk, render_complete_semaphore, nullptr);
+    vkDestroyImageView(vk::context().device.vk, image_view, nullptr);
 }
 
 error_code vk_swapchain::init(const window* win)
@@ -67,15 +67,15 @@ error_code vk_swapchain::init(const window* win)
         .presentMode = VK_PRESENT_MODE_FIFO_KHR
     };
 
-    if (FAILED(vkCreateSwapchainKHR(context.device.vk, &swapchain_create_info, nullptr, &vk)))
+    if (FAILED(vkCreateSwapchainKHR(vk::context().device.vk, &swapchain_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create swapchain");
 
     {
         uint32_t image_count{0};
-        if (FAILED(vkGetSwapchainImagesKHR(context.device.vk, vk, &image_count, nullptr)))
+        if (FAILED(vkGetSwapchainImagesKHR(vk::context().device.vk, vk, &image_count, nullptr)))
             return error(error_code::initialization, "Failed to get swapchain images");
         std::vector<VkImage> images(image_count);
-        if (FAILED(vkGetSwapchainImagesKHR(context.device.vk, vk, &image_count, images.data())))
+        if (FAILED(vkGetSwapchainImagesKHR(vk::context().device.vk, vk, &image_count, images.data())))
             return error(error_code::initialization, "Failed to get swapchain images");
         links.resize(image_count);
         for (size_t i = 0; i < image_count; ++i)
@@ -89,7 +89,7 @@ error_code vk_swapchain::init(const window* win)
         VkFormatProperties2 format_properties{
             .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2
         };
-        vkGetPhysicalDeviceFormatProperties2(context.physical_device.vk, format, &format_properties);
+        vkGetPhysicalDeviceFormatProperties2(vk::context().physical_device.vk, format, &format_properties);
         if (format_properties.formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
         {
             depth_format = format;
@@ -116,7 +116,7 @@ error_code vk_swapchain::init(const window* win)
         .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
         .usage = VMA_MEMORY_USAGE_AUTO
     };
-    if (FAILED(vmaCreateImage(context.allocator.vk, &depth_image_create_info, &alloc_create_info, &depth_image, &depth_image_alloc, nullptr)))
+    if (FAILED(vmaCreateImage(vk::context().allocator.vk, &depth_image_create_info, &alloc_create_info, &depth_image, &depth_image_alloc, nullptr)))
         return error(error_code::allocation, "Failed to create image");
     
     VkImageViewCreateInfo depth_view_create_info{
@@ -126,7 +126,7 @@ error_code vk_swapchain::init(const window* win)
         .format = depth_format,
         .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1}
     };
-    if (FAILED(vkCreateImageView(context.device.vk, &depth_view_create_info, nullptr, &depth_image_view)))
+    if (FAILED(vkCreateImageView(vk::context().device.vk, &depth_view_create_info, nullptr, &depth_image_view)))
         return error(error_code::initialization, "Failed to create swapchain depth image view");
 
     return error_code::success;
@@ -134,12 +134,12 @@ error_code vk_swapchain::init(const window* win)
 
 void vk_swapchain::destroy()
 {
-    vkDestroyImageView(context.device.vk, depth_image_view, nullptr);
-    vmaDestroyImage(context.allocator.vk, depth_image, depth_image_alloc);
+    vkDestroyImageView(vk::context().device.vk, depth_image_view, nullptr);
+    vmaDestroyImage(vk::context().allocator.vk, depth_image, depth_image_alloc);
 
     for (auto& link : links)
         link.destroy();
 
-    vkDestroySwapchainKHR(context.device.vk, vk, nullptr);
+    vkDestroySwapchainKHR(vk::context().device.vk, vk, nullptr);
 }
 }

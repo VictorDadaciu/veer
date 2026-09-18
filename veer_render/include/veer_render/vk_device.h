@@ -28,6 +28,8 @@ struct vk_device
     error_code init();
     void destroy();
 
+    void wait_idle() noexcept;
+
     ~vk_device() = default;
 
     VkDevice vk{};

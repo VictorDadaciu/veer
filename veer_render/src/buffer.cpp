@@ -75,7 +75,7 @@ error_code vk_buffer::upload(const std::byte* data, VkDeviceSize size, VkBufferU
     };
 
     VmaAllocationInfo buffer_alloc_info{};
-    if (FAILED(vmaCreateBuffer(context.allocator.vk, &buffer_create_info, &buffer_alloc_create_info, &vk, &alloc, &buffer_alloc_info)))
+    if (FAILED(vmaCreateBuffer(vk::context().allocator.vk, &buffer_create_info, &buffer_alloc_create_info, &vk, &alloc, &buffer_alloc_info)))
         return error(error_code::allocation, "Failed to allocate buffer on device");
 
     memcpy(buffer_alloc_info.pMappedData, reinterpret_cast<const void*>(data), size);
@@ -84,8 +84,8 @@ error_code vk_buffer::upload(const std::byte* data, VkDeviceSize size, VkBufferU
 
 void vk_buffer::destroy()
 {
-    vkDeviceWaitIdle(context.device.vk);
-    vmaDestroyBuffer(context.allocator.vk, vk, alloc);
+    vk::context().device.wait_idle();
+    vmaDestroyBuffer(vk::context().allocator.vk, vk, alloc);
 }
 
 error_code buffer::init(const std::byte* data, size_t size, buffer_type type)

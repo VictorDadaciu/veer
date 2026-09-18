@@ -11,8 +11,8 @@ namespace ve
 {
 error_code vk_surface::init(const window* win)
 {
-    if (!SDL_Vulkan_CreateSurface(win->sdl, context.instance.vk, nullptr, &vk) ||
-        FAILED(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.physical_device.vk, vk, &capabilities)))
+    if (!SDL_Vulkan_CreateSurface(win->sdl, vk::context().instance.vk, nullptr, &vk) ||
+        FAILED(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk::context().physical_device.vk, vk, &capabilities)))
         return error(error_code::initialization, "Failed to create render surface");
 
     return error_code::success;
@@ -20,6 +20,6 @@ error_code vk_surface::init(const window* win)
 
 void vk_surface::destroy()
 {
-    SDL_Vulkan_DestroySurface(context.instance.vk, vk, nullptr);
+    SDL_Vulkan_DestroySurface(vk::context().instance.vk, vk, nullptr);
 }
 }

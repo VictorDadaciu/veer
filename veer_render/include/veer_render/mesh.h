@@ -7,6 +7,12 @@
 #include <unordered_map>
 #include <vector>
 
+namespace ve::assets
+{
+struct asset_manager;
+class gltf_model_wrapper;
+}
+
 namespace ve
 {
 using namespace std::string_view_literals;
@@ -72,8 +78,8 @@ public:
     bool indexed() const noexcept { return m_index_attribute_view.element_count > 0; }
 
 private:
-    friend struct asset_manager;
-    friend struct gltf_model_wrapper;
+    friend struct ve::assets::asset_manager;
+    friend class ve::assets::gltf_model_wrapper;
     friend class mesh;
 
     std::unordered_map<std::string, attribute_view> m_vertex_attribute_views{};
@@ -114,8 +120,8 @@ public:
     void unload_from_gpu();
     
 private:
-    friend struct asset_manager;
-    friend struct gltf_model_wrapper;
+    friend struct ve::assets::asset_manager;
+    friend class ve::assets::gltf_model_wrapper;
     friend class mesh_primitive;
 
     void destroy();

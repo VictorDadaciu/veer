@@ -108,7 +108,7 @@ void run_gfx()
         auto _ = ve::assets::load("tests/assets/dog.ktx2");
         auto _ = ve::assets::load("tests/assets/box.glb");
         {
-            ve::window win; 
+            ve::window win;
             auto _ = win.open("Arena");
             static size_t it = 0;
             while (true)

@@ -51,23 +51,25 @@ enum class error_code
         return std::unexpected(res);            \
 }
 
-#define VEER_SAFE_CALL_HANDLE_EXPECTED(ret, call) ret;  \
-{                                                       \
-    auto res = call;                                    \
-    if (!res.has_value())                               \
-        return res.error();                             \
-    ret = *res;                                         \
+#define VEER_SAFE_CALL_HANDLE_EXPECTED(ret, call)   \
+{                                                   \
+    auto res = call;                                \
+    if (!res.has_value())                           \
+        return res.error();                         \
+    ret = *res;                                     \
 }
 
+#define VEER_SAFE_CALL_HANDLE_EXPECTED_INIT(ret, call) ret; VEER_SAFE_CALL_HANDLE_EXPECTED(ret, call);
 #define VEER_SAFE_JUST_INIT(var, ...) VEER_SAFE_CALL(var.init(__VA_ARGS__))
 #define VEER_SAFE_INIT(var, ...) var; VEER_SAFE_JUST_INIT(var, __VA_ARGS__)
 
 #ifndef VEER_KEEP_PREFIX
-#define FAILED                      VEER_FAILED
-#define SAFE_CALL                   VEER_SAFE_CALL
-#define SAFE_CALL_EXPECTED          VEER_SAFE_CALL_EXPECTED
-#define SAFE_CALL_RETURN_EXPECTED   VEER_SAFE_CALL_RETURN_EXPECTED
-#define SAFE_CALL_HANDLE_EXPECTED   VEER_SAFE_CALL_HANDLE_EXPECTED
-#define SAFE_INIT                   VEER_SAFE_INIT
-#define SAFE_JUST_INIT              VEER_SAFE_JUST_INIT
+#define FAILED                          VEER_FAILED
+#define SAFE_CALL                       VEER_SAFE_CALL
+#define SAFE_CALL_EXPECTED              VEER_SAFE_CALL_EXPECTED
+#define SAFE_CALL_RETURN_EXPECTED       VEER_SAFE_CALL_RETURN_EXPECTED
+#define SAFE_CALL_HANDLE_EXPECTED       VEER_SAFE_CALL_HANDLE_EXPECTED
+#define SAFE_CALL_HANDLE_EXPECTED_INIT  VEER_SAFE_CALL_HANDLE_EXPECTED_INIT
+#define SAFE_INIT                       VEER_SAFE_INIT
+#define SAFE_JUST_INIT                  VEER_SAFE_JUST_INIT
 #endif

@@ -6,11 +6,8 @@
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
-#include <concepts>
 #include <expected>
-#include <meta>
 #include <limits>
-#include <variant>
 
 namespace ve
 {
@@ -36,8 +33,8 @@ namespace ve::assets
 [[nodiscard]]
 asset_load_return_t load(const std::string&);
 
-ve::mesh& mesh(const size_t&);
-ve::texture& texture(const size_t&);
+mesh& mesh(size_t) noexcept;
+texture& texture(size_t) noexcept;
 
-void unload_all();
+void unload_all() noexcept;
 }

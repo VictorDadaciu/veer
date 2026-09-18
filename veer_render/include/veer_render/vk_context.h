@@ -13,7 +13,6 @@
 #include <array>
 
 // TODO: vk validation layers
-
 namespace ve
 {
 static constexpr uint8_t frames_in_flight = 2;
@@ -34,7 +33,7 @@ struct vk_frame_context
     VkSemaphore image_acquired_semaphore{};
 };
 
-extern struct vk_context
+struct vk_context
 {
     DECLARE_NO_COPY_NO_MOVE(vk_context);
 
@@ -57,6 +56,10 @@ extern struct vk_context
     vk_allocator allocator{};
     std::array<vk_frame_context, frames_in_flight> frames{};
     uint8_t current_frame_index{};
-} context;
+};
 }
-
+// TODO: put all vk_ stuff in vk namespace
+namespace ve::vk
+{
+    vk_context& context() noexcept;
+}

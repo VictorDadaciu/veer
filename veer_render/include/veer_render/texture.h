@@ -6,6 +6,12 @@
 
 #include <cstdint>
 
+namespace ve::assets
+{
+struct asset_manager;
+class ktx2_texture_wrapper;
+}
+
 struct VmaAllocation_T;
 namespace ve
 {
@@ -62,8 +68,8 @@ public:
     uint8_t mip_levels() const noexcept { return m_mip_levels; }
 
 private:
-    friend struct ktx2_texture_wrapper;
-    friend struct asset_manager;
+    friend struct ve::assets::asset_manager;
+    friend class ve::assets::ktx2_texture_wrapper;
 
     void destroy();
 
