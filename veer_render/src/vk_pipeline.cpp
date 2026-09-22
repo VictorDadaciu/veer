@@ -8,7 +8,6 @@
 #include <slang/slang.h>
 #include <slang/slang-com-ptr.h>
 
-// TODO: actually add destructors, handle nullptrs correctly
 namespace ve
 {
 error_code vk_shader_module::init(const byte_span& code)

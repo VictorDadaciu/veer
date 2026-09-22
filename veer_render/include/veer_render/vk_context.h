@@ -114,4 +114,3 @@ private:
     error_code select_gpu();
 };
 }
-// TODO: put all vk_ stuff in vk namespace

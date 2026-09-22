@@ -62,4 +62,3 @@ asset_load_return_t asset_manager::load_gltf_file(const std::string& path)
     return res;
 }
 }
-// TODO: make all constructors noexcept

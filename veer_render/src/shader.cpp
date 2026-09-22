@@ -55,7 +55,6 @@ error_code init_slang()
     return error_code::success;
 }
 
-// TODO: now that i get it, get it better
 std::expected<byte_span, error_code> load_slang_shader(const std::string& path)
 {
     if (!slang_global_session) SAFE_CALL_RETURN_EXPECTED(init_slang());
