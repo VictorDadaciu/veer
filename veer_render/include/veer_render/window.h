@@ -1,23 +1,27 @@
 #pragma once
 
+#include "vk_swapchain.h"
+#include "vk_ptr.h"
+
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
-#include "vk_surface.h"
-#include "vk_swapchain.h"
-
-class SDL_Window;
-
+struct SDL_Window;
 namespace ve
 {
-class window
+class window;
+struct vk_surface : public vk_unique_ptr<VkSurfaceKHR>
+{
+    error_code init(const window*);
+
+    VkSurfaceCapabilitiesKHR capabilities{};
+};
+
+class window : vk_unique_ptr<SDL_Window*>
 {
 public:
-    [[nodiscard]]
-    error_code open(c_string name, size_t width=1280zu, size_t height=720zu);
+    [[nodiscard]] error_code open(c_string name, size_t width=1280zu, size_t height=720zu);
     void close();
-
-    ~window() = default;
 
     c_string title() const;
 
@@ -30,7 +34,6 @@ private:
     friend class vk_surface;
     friend class vk_swapchain;
     
-    SDL_Window* sdl{};
     vk_surface surface{};
     vk_swapchain swapchain{};
 };

@@ -7,14 +7,11 @@
 #include <unordered_map>
 #include <vector>
 
-namespace ve::assets
+namespace ve
 {
 struct asset_manager;
 class gltf_model_wrapper;
-}
 
-namespace ve
-{
 using namespace std::string_view_literals;
 constexpr std::string_view POSITION_ATTRIBUTE_NAME   = "POSITION"sv;
 constexpr std::string_view NORMAL_ATTRIBUTE_NAME     = "NORMAL"sv;
@@ -78,8 +75,8 @@ public:
     bool indexed() const noexcept { return m_index_attribute_view.element_count > 0; }
 
 private:
-    friend struct ve::assets::asset_manager;
-    friend class ve::assets::gltf_model_wrapper;
+    friend struct ve::asset_manager;
+    friend class ve::gltf_model_wrapper;
     friend class mesh;
 
     std::unordered_map<std::string, attribute_view> m_vertex_attribute_views{};
@@ -115,13 +112,10 @@ public:
     }
 
     std::string name() const noexcept { return m_name; }
-    [[nodiscard]]
-    error_code upload_to_gpu();
-    void unload_from_gpu();
     
 private:
-    friend struct ve::assets::asset_manager;
-    friend class ve::assets::gltf_model_wrapper;
+    friend struct ve::asset_manager;
+    friend class ve::gltf_model_wrapper;
     friend class mesh_primitive;
 
     void destroy();
@@ -129,6 +123,6 @@ private:
     std::vector<mesh_primitive> m_primitives{};
     std::vector<offset_span> m_buffer_views{};
     std::string m_name{};
-    buffer m_buffer{};
+    mesh_buffer m_buffer{};
 };
 }

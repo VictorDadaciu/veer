@@ -1,8 +1,9 @@
 #pragma once
 
-#include <veer_core/utils.h>
+#include "vk_ptr.h"
 
 #include <veer_core/error_code.h>
+#include <veer_core/utils.h>
 
 #include <vulkan/vulkan.h>
 
@@ -11,76 +12,15 @@
 class VmaAllocation_T;
 namespace ve
 {
-struct vk_buffer
+struct vk_buffer : public vk_allocated_ptr<VkBuffer>
 {
-    DECLARE_NO_COPY(vk_buffer);
-
-    vk_buffer(vk_buffer&& other) :
-        vk(other.vk),
-        alloc(other.alloc)
-    {
-        other.vk = nullptr;
-        other.alloc = nullptr;
-    }
-    vk_buffer& operator=(vk_buffer&& other)
-    {
-        vk = other.vk;
-        alloc = other.alloc;
-        other.vk = nullptr;
-        other.alloc = nullptr;
-        return *this;
-    }
-
-    error_code upload(const std::byte*, VkDeviceSize, VkBufferCreateFlags, VkFlags);
-    void destroy();
-
-    ~vk_buffer() = default;
-
-    VkBuffer vk{};
-    VmaAllocation_T* alloc{};
+    using vk_allocated_ptr<VkBuffer>::destroy;
+    size_t size{};
 };
 
-enum class buffer_type
+// vertex + index
+struct mesh_buffer : public vk_buffer
 {
-    vertex,
-    index,
-    vertex_and_index,
-    image_transfer_src,
-};
-
-struct buffer
-{
-    DECLARE_NO_COPY(buffer);
-
-    buffer(buffer&& other)
-    : cpu(std::move(other.cpu)),
-    gpu(std::move(other.gpu)),
-    type(other.type)
-    {
-        other.cpu.invalidate();
-    }
-
-    buffer& operator=(buffer&& other)
-    {
-        cpu = std::move(other.cpu);
-        gpu = std::move(other.gpu);
-        type = other.type;
-        other.cpu.invalidate();
-        return *this;
-    }
-
-    error_code init(const std::byte*, size_t, buffer_type);
-    error_code init(const byte_span&, buffer_type);
-    error_code init(size_t, buffer_type);
-    void destroy();
-
-    error_code upload_to_gpu();
-    void unload_from_gpu();
-
-    ~buffer() = default;
-
-    byte_span cpu{};
-    vk_buffer gpu{};
-    buffer_type type{};
+    error_code init(size_t);
 };
 }

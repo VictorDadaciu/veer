@@ -1,5 +1,9 @@
 #pragma once
 
+#include "buffer.h"
+#include "vk_sync.h"
+#include "vk_ptr.h"
+
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
@@ -10,19 +14,27 @@
 
 namespace ve
 {
-struct vk_command_pool
+struct vk_command_buffer : public vk_weak_ptr<VkCommandBuffer>
 {
-    VEER_DECLARE_NO_COPY_NO_MOVE(vk_command_pool);
+    error_code begin(bool=true);
+    error_code end();
+    error_code submit(vk_weak_ptr<VkQueue>, vk_weak_ptr<VkFence> = nullptr);
 
+    void copy_buffer(const vk_buffer&, const vk_buffer&, size_t);
+    void copy_buffer(const vk_buffer& source, const vk_buffer& target) { copy_buffer(source, target, target.size); }
+
+    using parent_type = vk_weak_ptr<VkCommandBuffer>;
+    using parent_type::parent_type;
+    using parent_type::operator=;
+};
+
+struct vk_command_pool : public vk_unique_ptr<VkCommandPool>
+{
     error_code init(VkCommandPoolCreateFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-    void destroy();
-
-    ~vk_command_pool() = default;
-
-    std::expected<VkCommandBuffer, error_code> allocate_cmd_buffer(bool is_primary=true) const;
-    std::expected<std::vector<VkCommandBuffer>, error_code> allocate_cmd_buffers(bool is_primary, uint32_t) const;
-
-    VkCommandPool vk{};
+    [[nodiscard]]
+    std::expected<vk_weak_ptr<VkCommandBuffer>, error_code> allocate_cmd_buffer(bool is_primary=true) const;
+    [[nodiscard]]
+    std::expected<std::vector<vk_weak_ptr<VkCommandBuffer>>, error_code> allocate_cmd_buffers(uint32_t, bool is_primary=true) const;
 };
 }

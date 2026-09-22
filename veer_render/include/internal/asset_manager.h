@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace ve::assets
+namespace ve
 {
 struct asset_manager
 {
@@ -37,7 +37,8 @@ struct asset_manager
 
     std::vector<ve::mesh> meshes{};
     std::vector<ve::texture> textures{};
+
+    _VEER_SINGLETON(asset_manager);
 };
 
-asset_manager& manager() noexcept;
 }

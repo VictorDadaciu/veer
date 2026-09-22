@@ -5,7 +5,7 @@
 #include "internal/asset_manager.h"
 
 struct ktxTexture2;
-namespace ve::assets
+namespace ve
 {
 class ktx2_texture_wrapper
 {
@@ -19,9 +19,5 @@ public:
 
 private:
     ktxTexture2* m_ktx{};
-    // TODO: not here
-    buffer m_staging_buffer{};
-    // TODO: not with fence, just work with a placeholder until copying tex is done
-    VkFence m_one_shot_fence{};
 };
 }

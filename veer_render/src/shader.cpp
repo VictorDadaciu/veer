@@ -28,7 +28,7 @@ error_code init_slang()
     auto slang_targets{
         std::to_array<slang::TargetDesc>({{
             .format{SLANG_SPIRV},
-            .profile{slang_global_session->findProfile("spirv_1_4")}
+            .profile{slang_global_session->findProfile("spirv_1_5")}
         }})
     };
 
@@ -72,7 +72,7 @@ std::expected<byte_span, error_code> load_slang_shader(const std::string& path)
 
     if (!slang_module)
     {
-        if (errs) warn(reinterpret_cast<c_string>(errs->getBufferPointer()));
+        if (errs) debug(reinterpret_cast<c_string>(errs->getBufferPointer()));
         return std::unexpected(error(error_code::file_read, "Failed to read shader file \"{}\"", path));
     }
         

@@ -18,7 +18,7 @@ error_code vk_shader_module::init(const byte_span& code)
         .codeSize = static_cast<uint32_t>(code.size),
         .pCode = reinterpret_cast<const uint32_t*>(code.data)
     };
-    if (FAILED(vkCreateShaderModule(vk::context().device.vk, &shader_module_create_info, nullptr, &vk)))
+    if (FAILED(vkCreateShaderModule(vk_context::get().device, &shader_module_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create vulkan shader module");
 
     return error_code::success;
@@ -26,7 +26,7 @@ error_code vk_shader_module::init(const byte_span& code)
 
 void vk_shader_module::destroy()
 {
-    vkDestroyShaderModule(vk::context().device.vk, vk, nullptr);
+    vkDestroyShaderModule(vk_context::get().device, vk, nullptr);
 }
 
 error_code vk_pipeline::init(const byte_span& code)
@@ -61,6 +61,6 @@ error_code vk_pipeline::init(const vk_shader_module& module)
 
 void vk_pipeline::destroy()
 {
-    vkDestroyPipeline(vk::context().device.vk, vk, nullptr);
+    vkDestroyPipeline(vk_context::get().device, vk, nullptr);
 }
 }

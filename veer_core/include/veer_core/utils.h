@@ -67,6 +67,13 @@ x() = default;                  \
 x(const x&) = delete;           \
 x& operator=(const x&) = delete;
 
+#define _VEER_SINGLETON(x)      \
+inline static x& get() noexcept \
+{                               \
+    static x instance;          \
+    return instance;            \
+}
+
 #define VEER_STRONG_TYPEDEF(underlying, name)                              \
 class name final                                                           \
 {                                                                          \

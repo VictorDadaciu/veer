@@ -7,20 +7,18 @@ set(VEER_RENDER_SOURCES
     src/mesh.cpp
     src/shader.cpp
     src/texture.cpp
-    src/vk_allocator.cpp
     src/vk_command.cpp
     src/vk_context.cpp
-    src/vk_instance.cpp
-    src/vk_device.cpp
     src/vk_pipeline.cpp
-    src/vk_queue.cpp
-    src/vk_surface.cpp
     src/vk_swapchain.cpp
+    src/vk_sync.cpp
+    src/vk_utils.cpp
     src/window.cpp
 
     src/asset_manager.cpp
     src/gltf.cpp
     src/ktx2.cpp
+    src/staging_buffer.cpp
 )
 
 set(VEER_RENDER_HEADERS
@@ -30,20 +28,20 @@ set(VEER_RENDER_HEADERS
     include/veer_render/mesh.h
     include/veer_render/shader.h
     include/veer_render/texture.h
-    include/veer_render/vk_allocator.h
     include/veer_render/vk_command.h
     include/veer_render/vk_context.h
-    include/veer_render/vk_device.h
-    include/veer_render/vk_instance.h
+    include/veer_render/vk_image.h
     include/veer_render/vk_pipeline.h
-    include/veer_render/vk_queue.h
-    include/veer_render/vk_surface.h
     include/veer_render/vk_swapchain.h
+    include/veer_render/vk_sync.h
+    include/veer_render/vk_utils.h
+    include/veer_render/vk_ptr.h
     include/veer_render/window.h
 
     include/internal/asset_manager.h
     include/internal/gltf.h
     include/internal/ktx2.h
+    include/internal/staging_buffer.h
 )
 
 add_library(veer_render STATIC

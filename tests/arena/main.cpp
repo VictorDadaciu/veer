@@ -104,6 +104,7 @@ void run_gfx()
 {
     if (ve::gfx::init() == ve::error_code::success)
     {
+        // /home/victordadaciu/workspace/veer/
         auto _ = ve::shader::load("tests/assets/triangle.slang");
         auto _ = ve::assets::load("tests/assets/dog.ktx2");
         auto _ = ve::assets::load("tests/assets/box.glb");
@@ -123,7 +124,7 @@ void run_gfx()
 
 int main()
 {
-    ve::log::init("arena");
+    ve::log::init("arena", ve::log::level::info);
 
     run_db();
     run_gfx();

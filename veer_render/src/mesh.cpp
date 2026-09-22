@@ -17,23 +17,13 @@ static const std::unordered_set<std::string_view> attribute_names = {
     WEIGHTS_0_ATTRIBUTE_NAME, 
 };
 
-error_code mesh::upload_to_gpu()
+mesh& mesh_primitive::parent() const noexcept
 {
-    return m_buffer.upload_to_gpu();
-}
-
-void mesh::unload_from_gpu()
-{
-    m_buffer.unload_from_gpu();
+    return assets::mesh(m_parent_index);
 }
 
 void mesh::destroy()
 {
     m_buffer.destroy();
-}
-
-mesh& mesh_primitive::parent() const noexcept
-{
-    return assets::mesh(m_parent_index);
 }
 }

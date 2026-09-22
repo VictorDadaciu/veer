@@ -11,12 +11,22 @@
 
 namespace ve
 {
+error_code vk_surface::init(const window* win)
+{
+    if (!SDL_Vulkan_CreateSurface(*win, vk_context::get().instance, nullptr, &vk) ||
+        FAILED(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_context::get().gpu(), vk, &capabilities)))
+        return error(error_code::initialization, "Failed to create render surface");
+
+    return error_code::success;
+}
+
 error_code window::open(c_string name, size_t width, size_t height)
 {
     trace("Creating window \"{}\"", name);
-    sdl = SDL_CreateWindow(name, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-    if (!sdl)
-        return error_code::initialization;
+    vk = SDL_CreateWindow(name, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
+    if (!vk)
+        return error(error_code::initialization, "Failed to create SDL window");
+    
     SAFE_JUST_INIT(surface, this);
     SAFE_JUST_INIT(swapchain, this);
 
@@ -25,17 +35,14 @@ error_code window::open(c_string name, size_t width, size_t height)
 
 c_string window::title() const
 {
-    return SDL_GetWindowTitle(sdl);
+    return SDL_GetWindowTitle(vk);
 }
 
 error_code window::size(size_t& width, size_t& height) const
 {
     int w{}, h{};
-    if (!SDL_GetWindowSize(sdl, &w, &h))
-    {
-        warn("SDL_GetWindowSize failed");
-        return error_code::window;
-    }
+    if (!SDL_GetWindowSize(vk, &w, &h))
+        return warn(error_code::window, "SDL_GetWindowSize failed");
     width = static_cast<size_t>(w);
     height = static_cast<size_t>(h);
     return error_code::success;
@@ -60,9 +67,9 @@ size_t window::height() const
 void window::close()
 {
     trace("Closing window \"{}\"", title());
-    vk::context().device.wait_idle();
+    vk_context::get().device.wait_idle();
     swapchain.destroy();
     surface.destroy();
-    SDL_DestroyWindow(sdl);
+    vk_unique_ptr<SDL_Window*>::destroy();
 }
 }

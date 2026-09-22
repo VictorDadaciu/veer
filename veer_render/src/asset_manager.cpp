@@ -6,7 +6,7 @@
 #include "internal/gltf.h"
 #include "internal/ktx2.h"
 
-namespace ve::assets
+namespace ve
 {
 asset_load_return_t asset_manager::load_ktx2_file(const std::string& path)
 {
@@ -41,6 +41,7 @@ asset_load_return_t asset_manager::load_gltf_file(const std::string& path)
         if (model.meshes_count == 0)
             return std::unexpected(error(error_code::file_read, "Asset file \"{}\" is invalid: has no meshes", path));
 
+        trace("Loaded .gltf file");
         for (size_t i = 0; i < model.meshes_count; ++i)
         {
             ve::mesh& new_mesh = meshes.emplace_back();
@@ -60,10 +61,5 @@ asset_load_return_t asset_manager::load_gltf_file(const std::string& path)
     }
     return res;
 }
-
-asset_manager& manager() noexcept
-{
-    static asset_manager mgr{};
-    return mgr;
 }
-}
+// TODO: make all constructors noexcept

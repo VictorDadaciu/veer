@@ -17,13 +17,15 @@ asset_load_return_t load(const std::string& path)
         return std::unexpected(error(error_code::file_not_exists, "Asset file \"{}\" doesn't exist", path));
     std::string extension = file::extension(path);
     info("Loading asset file at \"{}\"...", path);
+
+    auto& mgr = ve::asset_manager::get();
     if (extension == ".glb" || extension == ".gltf")
     {
-        return manager().load_gltf_file(path);
+        return mgr.load_gltf_file(path);
     }
     else if (extension == ".ktx2")
     {
-        return manager().load_ktx2_file(path);
+        return mgr.load_ktx2_file(path);
     }
     else
     {
@@ -33,19 +35,20 @@ asset_load_return_t load(const std::string& path)
 
 ve::mesh& mesh(size_t index) noexcept
 {
-    assert(index < manager().meshes.size());
-    return manager().meshes[index];
+    assert(index < ve::asset_manager::get().meshes.size());
+    return ve::asset_manager::get().meshes[index];
 }
 
 ve::texture& texture(size_t index) noexcept
 {
-    assert(index < manager().meshes.size());
-    return manager().textures[index];
+    assert(index < ve::asset_manager::get().meshes.size());
+    return ve::asset_manager::get().textures[index];
 }
 
 void unload_all() noexcept
 {
-    manager().unload_back(manager().meshes);
-    manager().unload_back(manager().textures);
+    auto& mgr = ve::asset_manager::get();
+    mgr.unload_back(mgr.meshes);
+    mgr.unload_back(mgr.textures);
 }
 }

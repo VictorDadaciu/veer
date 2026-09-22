@@ -1,90 +1,46 @@
 #pragma once
 
+#include "vk_image.h"
+
+#include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
 #include <vulkan/vulkan.h>
 
 #include <cstdint>
 
-namespace ve::assets
+struct VmaAllocation_T;
+struct ktxTexture2;
+namespace ve
 {
 struct asset_manager;
 class ktx2_texture_wrapper;
-}
 
-struct VmaAllocation_T;
-namespace ve
+struct image_metadata
 {
-class texture
+    size_t width{};
+    size_t height{};
+    size_t size{};
+    uint8_t mip_levels{};
+};
+
+class texture : public vk_sampled_image
 {
 public:
-    VEER_DECLARE_NO_COPY(texture);
-
-    texture(texture&& other)
-    : m_image(other.m_image),
-    m_image_view(other.m_image_view),
-    m_alloc(other.m_alloc),
-    m_sampler(other.m_sampler),
-    m_desc_layout(other.m_desc_layout),
-    m_desc_pool(other.m_desc_pool),
-    m_desc_set(other.m_desc_set),
-    m_width(other.m_width),
-    m_height(other.m_height),
-    m_mip_levels(other.m_mip_levels)
-    {
-        other.m_image = nullptr;
-        other.m_image_view = nullptr;
-        other.m_alloc = nullptr;
-        other.m_sampler = nullptr;
-        other.m_desc_layout = nullptr;
-        other.m_desc_pool = nullptr;
-        other.m_desc_set = nullptr;
-    }
-
-    texture& operator=(texture&& other)
-    {
-        m_image = other.m_image;
-        m_image_view = other.m_image_view;
-        m_alloc = other.m_alloc;
-        m_sampler = other.m_sampler;
-        m_desc_layout = other.m_desc_layout;
-        m_desc_pool = other.m_desc_pool;
-        m_desc_set = other.m_desc_set;
-        m_width = other.m_width;
-        m_height = other.m_height;
-        m_mip_levels = other.m_mip_levels;
-        other.m_image = nullptr;
-        other.m_image_view = nullptr;
-        other.m_alloc = nullptr;
-        other.m_sampler = nullptr;
-        other.m_desc_layout = nullptr;
-        other.m_desc_pool = nullptr;
-        other.m_desc_set = nullptr;
-        return *this;
-    }
-
-    size_t width() const noexcept { return m_width; }
-    size_t height() const noexcept { return m_height; }
-    uint8_t mip_levels() const noexcept { return m_mip_levels; }
+    size_t width() const noexcept { return m_metadata.width; }
+    size_t height() const noexcept { return m_metadata.height; }
+    uint8_t mip_levels() const noexcept { return m_metadata.mip_levels; }
+    vk_weak_ptr<VkDescriptorSet> descriptor_set() const noexcept { return m_desc_set; }
 
 private:
-    friend struct ve::assets::asset_manager;
-    friend class ve::assets::ktx2_texture_wrapper;
+    friend struct ve::asset_manager;
+    friend class ve::ktx2_texture_wrapper;
 
-    void destroy();
+    error_code init(ktxTexture2*);
+    using vk_sampled_image::destroy;
 
-    // TODO: texture class
-    VkImage m_image{};
-    VkImageView m_image_view{};
-    VmaAllocation_T* m_alloc{};
-    VkSampler m_sampler{};
-    // TODO: not here
-    VkDescriptorSetLayout m_desc_layout{};
-    VkDescriptorPool m_desc_pool{};
-    VkDescriptorSet m_desc_set{};
+    vk_weak_ptr<VkDescriptorSet> m_desc_set{};
 
-    size_t m_width{};
-    size_t m_height{};
-    uint8_t m_mip_levels{};
+    image_metadata m_metadata{};
 };
 }

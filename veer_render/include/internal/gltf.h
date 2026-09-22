@@ -7,7 +7,7 @@
 
 #include <flat_map>
 
-namespace ve::assets
+namespace ve
 {
 class gltf_model_wrapper : public tg3_model
 {
@@ -24,7 +24,7 @@ public:
 
 private:
     size_t get_buffer_and_update_buffers_if_needed(ve::mesh&, size_t);
-    void allocate_and_copy(ve::mesh&);
+    error_code allocate_and_copy(ve::mesh&);
 
     std::flat_map<size_t, size_t> m_buffer_indices_map{};
     size_t m_total_size;

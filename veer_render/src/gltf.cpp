@@ -2,13 +2,14 @@
 #include "internal/gltf.h"
 
 #include "internal/asset_manager.h"
+#include "internal/staging_buffer.h"
 
 #include <veer_core/file.h>
 #include <veer_core/log.h>
 
 #include <vma/vk_mem_alloc.h>
 
-namespace ve::assets
+namespace ve
 {
 error_code gltf_model_wrapper::load(const std::string& path)
 {
@@ -19,7 +20,7 @@ error_code gltf_model_wrapper::load(const std::string& path)
     if (tg3_parse_file(this, &errs, path.c_str(), path.size(), nullptr) != TG3_OK)
     {
         for (uint32_t i = 0; i < errs.count; ++i)
-            warn(errs.entries[i].message ? errs.entries[i].message : "(null)");
+            warn(errs.entries[i].message ? errs.entries[i].message : "null");
         tg3_error_stack_free(&errs);
         return error(error_code::file_read, "Failed to load asset file \"{}\"", path);
     }
@@ -43,19 +44,21 @@ size_t gltf_model_wrapper::get_buffer_and_update_buffers_if_needed(ve::mesh& new
     return m_buffer_indices_map.insert({buffer_index, m_buffer_indices_map.size()}).first->second;
 }
 
-void gltf_model_wrapper::allocate_and_copy(ve::mesh& new_mesh)
+error_code gltf_model_wrapper::allocate_and_copy(ve::mesh& new_mesh)
 {
-    new_mesh.m_buffer.init(m_total_size, buffer_type::vertex_and_index);
+    new_mesh.m_buffer.init(m_total_size);
+
+    auto& staging = staging_buffer::get();
+    staging.wait_until_finished_transfering();
+    SAFE_CALL(staging.resize_if_needed(m_total_size));
     for (const auto& index_pairs : m_buffer_indices_map)
-        memcpy(
-            reinterpret_cast<void*>(
-                const_cast<std::byte*>(
-                    new_mesh.m_buffer.cpu.data + new_mesh.m_buffer_views[index_pairs.second].offset
-                )
-            ),
-            this->buffers[index_pairs.first].data.data,
-            new_mesh.m_buffer_views[index_pairs.second].size
-        );
+        staging.copy_to_mapped(
+                this->buffers[index_pairs.first].data.data,
+                new_mesh.m_buffer_views[index_pairs.second].size,
+                new_mesh.m_buffer_views[index_pairs.second].offset
+            );
+    staging.transfer_to_buffer(new_mesh.m_buffer);
+    return error_code::success;\
 }
 
 error_code gltf_model_wrapper::initialize_mesh(ve::mesh& new_mesh, size_t mesh_index)
