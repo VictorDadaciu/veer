@@ -1,4 +1,4 @@
-#include "internal/staging_buffer.h"
+#include "staging_buffer.h"
 
 #include "vk_command.h"
 #include "vk_context.h"

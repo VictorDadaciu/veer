@@ -1,8 +1,9 @@
 #define TINYGLTF3_IMPLEMENTATION
 #include "internal/gltf.h"
 
+#include "staging_buffer.h"
+
 #include "internal/asset_manager.h"
-#include "internal/staging_buffer.h"
 
 #include "vk_context.h"
 

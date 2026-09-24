@@ -15,7 +15,7 @@
 
 namespace ve
 {
-// TODO: expose, make thread-safe etc.
+// TODO: make easier to use, make thread-safe etc.
 struct staging_buffer : public vk_buffer
 {
     error_code init(size_t);

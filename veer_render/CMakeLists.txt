@@ -4,7 +4,9 @@ set(VEER_RENDER_SOURCES
     src/assets.cpp
     src/graphics.cpp
     src/mesh.cpp
+    src/render_data.cpp
     src/shader.cpp
+    src/staging_buffer.cpp
     src/texture.cpp
     src/vk_command.cpp
     src/vk_context.cpp
@@ -17,16 +19,17 @@ set(VEER_RENDER_SOURCES
     src/asset_manager.cpp
     src/gltf.cpp
     src/ktx2.cpp
-    src/staging_buffer.cpp
 )
 
 set(VEER_RENDER_HEADERS
     include/veer_render/assets.h
-    include/veer_render/vk_buffer.h
     include/veer_render/graphics.h
     include/veer_render/mesh.h
+    include/veer_render/render_data.h
     include/veer_render/shader.h
+    include/veer_render/staging_buffer.h
     include/veer_render/texture.h
+    include/veer_render/vk_buffer.h
     include/veer_render/vk_command.h
     include/veer_render/vk_context.h
     include/veer_render/vk_image.h
@@ -40,7 +43,6 @@ set(VEER_RENDER_HEADERS
     include/internal/asset_manager.h
     include/internal/gltf.h
     include/internal/ktx2.h
-    include/internal/staging_buffer.h
 )
 
 add_library(veer_render STATIC

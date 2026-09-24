@@ -1,9 +1,10 @@
 #include "graphics.h"
 
-#include "internal/asset_manager.h"
-#include "internal/staging_buffer.h"
+#include "staging_buffer.h"
 #include "shader.h"
 #include "vk_context.h"
+
+#include "internal/asset_manager.h"
 
 #include <veer_core/log.h>
 

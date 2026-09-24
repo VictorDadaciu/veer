@@ -1,9 +1,8 @@
 #include "internal/ktx2.h"
 
+#include "staging_buffer.h"
 #include "vk_command.h"
 #include "vk_context.h"
-
-#include "internal/staging_buffer.h"
 
 #include <veer_core/log.h>
 
