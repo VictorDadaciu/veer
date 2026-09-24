@@ -103,4 +103,14 @@ void vk_command_buffer::copy_buffer(const vk_buffer& source, const vk_buffer& ta
     };
     vkCmdCopyBuffer2(vk, &copy_buffer_info);
 }
+
+void vk_command_buffer::pipeline_barrier(const VkDependencyInfo& dependency_info)
+{
+    vkCmdPipelineBarrier2(vk, &dependency_info);
+}
+
+void vk_command_buffer::copy_buffer_to_image(const VkCopyBufferToImageInfo2& copy_to_image_info)
+{
+    vkCmdCopyBufferToImage2(vk, &copy_to_image_info);
+}
 }

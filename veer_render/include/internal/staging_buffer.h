@@ -1,6 +1,7 @@
 #pragma once
 
-#include "buffer.h"
+#include "vk_image.h"
+#include "vk_buffer.h"
 #include "vk_sync.h"
 
 #include <veer_core/error_code.h>
@@ -9,6 +10,8 @@
 #include <vulkan/vulkan.h>
 
 #include <vma/vk_mem_alloc.h>
+
+#include <vector>
 
 namespace ve
 {
@@ -22,6 +25,7 @@ struct staging_buffer : public vk_buffer
     void copy_to_mapped(const void*, size_t, size_t=0zu);
 
     error_code transfer_to_buffer(const vk_buffer&);
+    error_code transfer_to_image(const vk_image&, const std::vector<VkBufferImageCopy2>&);
 
     void wait_until_finished_transfering() noexcept;
     bool is_transfering() const noexcept;

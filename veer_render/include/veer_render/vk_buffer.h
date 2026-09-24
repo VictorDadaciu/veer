@@ -17,10 +17,4 @@ struct vk_buffer : public vk_allocated_ptr<VkBuffer>
     using vk_allocated_ptr<VkBuffer>::destroy;
     size_t size{};
 };
-
-// vertex + index
-struct mesh_buffer : public vk_buffer
-{
-    error_code init(size_t);
-};
 }

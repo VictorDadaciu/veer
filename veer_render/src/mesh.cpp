@@ -1,6 +1,6 @@
 #include "mesh.h"
 
-#include "asset.h"
+#include "assets.h"
 
 #include <unordered_set>
 
@@ -19,11 +19,6 @@ static const std::unordered_set<std::string_view> attribute_names = {
 
 mesh& mesh_primitive::parent() const noexcept
 {
-    return assets::mesh(m_parent_index);
-}
-
-void mesh::destroy()
-{
-    m_buffer.destroy();
+    return assets::mesh(parent_index);
 }
 }

@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.21..4.4)
 
 set(VEER_RENDER_SOURCES
-    src/buffer.cpp
-    src/asset.cpp
+    src/assets.cpp
     src/graphics.cpp
     src/mesh.cpp
     src/shader.cpp
@@ -22,8 +21,8 @@ set(VEER_RENDER_SOURCES
 )
 
 set(VEER_RENDER_HEADERS
-    include/veer_render/asset.h
-    include/veer_render/buffer.h
+    include/veer_render/assets.h
+    include/veer_render/vk_buffer.h
     include/veer_render/graphics.h
     include/veer_render/mesh.h
     include/veer_render/shader.h

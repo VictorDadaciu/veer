@@ -52,7 +52,7 @@ asset_load_return_t asset_manager::load_gltf_file(const std::string& path)
             }
 
             res.push_back({
-                .name = new_mesh.name(),
+                .name = new_mesh.name,
                 .index = meshes.size() - 1,
                 .type = asset_type::mesh,
             });

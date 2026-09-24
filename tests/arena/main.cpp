@@ -1,7 +1,7 @@
 #include <veer_core/log.h>
 #include <veer_core/db.h>
 
-#include <veer_render/asset.h>
+#include <veer_render/assets.h>
 #include <veer_render/mesh.h>
 #include <veer_render/graphics.h>
 #include <veer_render/shader.h>

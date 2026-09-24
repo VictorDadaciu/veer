@@ -1,6 +1,6 @@
 #pragma once
 
-#include "buffer.h"
+#include "vk_buffer.h"
 
 #include <cstdint>
 #include <string>
@@ -9,9 +9,6 @@
 
 namespace ve
 {
-struct asset_manager;
-class gltf_model_wrapper;
-
 using namespace std::string_view_literals;
 constexpr std::string_view POSITION_ATTRIBUTE_NAME   = "POSITION"sv;
 constexpr std::string_view NORMAL_ATTRIBUTE_NAME     = "NORMAL"sv;
@@ -35,94 +32,46 @@ enum class render_mode : uint8_t
 
 struct attribute_view
 {
-    size_t buffer{};
+    size_t buffer_view_index{};
     size_t byte_offset{};
     size_t element_count{};
     size_t stride{};
     uint8_t component_size{};
     uint8_t component_count{};
-    bool floating_point{};
+    bool is_floating_point{};
 
     uint8_t element_size() const noexcept { return component_size * component_count; }
 };
 
-class mesh;
-class mesh_primitive
+struct mesh;
+struct mesh_primitive
 {
-public:
     VEER_DECLARE_NO_COPY(mesh_primitive);
 
-    mesh_primitive(mesh_primitive&& other)
-    : m_vertex_attribute_views(std::move(other.m_vertex_attribute_views)),
-    m_index_attribute_view(std::move(other.m_index_attribute_view)),
-    m_parent_index(other.m_parent_index),
-    m_render_mode(other.m_render_mode)
-    {
-        other.m_vertex_attribute_views.clear();
-    }
-
-    mesh_primitive& operator=(mesh_primitive&& other)
-    {
-        m_vertex_attribute_views = std::move(other.m_vertex_attribute_views);
-        m_index_attribute_view = std::move(other.m_index_attribute_view);
-        m_parent_index = other.m_parent_index;
-        m_render_mode = other.m_render_mode;
-        other.m_vertex_attribute_views.clear();
-        return *this;
-    }
+    mesh_primitive(mesh_primitive&&) = default;
+    mesh_primitive& operator=(mesh_primitive&&) = default;
 
     mesh& parent() const noexcept;
-    bool indexed() const noexcept { return m_index_attribute_view.element_count > 0; }
+    bool indexed() const noexcept { return index_attribute_view.element_count > 0; }
 
-private:
-    friend struct ve::asset_manager;
-    friend class ve::gltf_model_wrapper;
-    friend class mesh;
-
-    std::unordered_map<std::string, attribute_view> m_vertex_attribute_views{};
-    attribute_view m_index_attribute_view{};
-    size_t m_parent_index{};
-    render_mode m_render_mode;
+    std::unordered_map<std::string, attribute_view> vertex_attribute_views{};
+    attribute_view index_attribute_view{};
+    size_t parent_index{};
+    render_mode mode;
 };
 
-class mesh
+class mesh : public vk_buffer
 {
 public:
     VEER_DECLARE_NO_COPY(mesh);
 
-    mesh(mesh&& other)
-    : m_primitives(std::move(other.m_primitives)),
-    m_buffer_views(std::move(other.m_buffer_views)),
-    m_name(std::move(other.m_name)),
-    m_buffer(std::move(other.m_buffer))
-    {
-        other.m_primitives.clear();
-        other.m_buffer_views.clear();
-    }
+    mesh(mesh&&) = default;
+    mesh& operator=(mesh&&) = default;
 
-    mesh& operator=(mesh&& other)
-    {
-        m_primitives = std::move(other.m_primitives);
-        m_buffer_views = std::move(other.m_buffer_views);
-        m_name = std::move(other.m_name);
-        m_buffer = std::move(other.m_buffer);
-        other.m_primitives.clear();
-        other.m_buffer_views.clear();
-        return *this;
-    }
+    using vk_buffer::destroy;
 
-    std::string name() const noexcept { return m_name; }
-    
-private:
-    friend struct ve::asset_manager;
-    friend class ve::gltf_model_wrapper;
-    friend class mesh_primitive;
-
-    void destroy();
-
-    std::vector<mesh_primitive> m_primitives{};
-    std::vector<offset_span> m_buffer_views{};
-    std::string m_name{};
-    mesh_buffer m_buffer{};
+    std::vector<mesh_primitive> primitives{};
+    std::vector<offset_span> buffer_views{};
+    std::string name{};
 };
 }

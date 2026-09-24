@@ -47,6 +47,7 @@ target_include_directories(veer
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/veer/extern>
 )
 
+# TODO: expose vma as well, it's just one file..
 option(VEER_INSTALL "Install veer" ${VEER_IS_TOP_LEVEL})
 if (${VEER_INSTALL})
     message("Configuring veer install...")

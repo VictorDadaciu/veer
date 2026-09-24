@@ -24,14 +24,6 @@ void destroy(VkSemaphore semaphore) { vkDestroySemaphore(vk_context::get().devic
 void destroy(SDL_Window* window) { SDL_DestroyWindow(window); }
 void destroy(VkSampler sampler) { vkDestroySampler(vk_context::get().device, sampler, nullptr); }
 void destroy(VkCommandPool pool) { vkDestroyCommandPool(vk_context::get().device, pool, nullptr); }
-void destroy(VkBuffer buffer, VmaAllocation_T* allocation)
-{
-    trace("Destroying buffer...");
-    vmaDestroyBuffer(vk_context::get().allocator, buffer, allocation);
-}
-void destroy(VkImage image, VmaAllocation_T* allocation)
-{
-    trace("Destroying image...");
-    vmaDestroyImage(vk_context::get().allocator, image, allocation);
-}
+void destroy(VkBuffer buffer, VmaAllocation_T* allocation) { vmaDestroyBuffer(vk_context::get().allocator, buffer, allocation); }
+void destroy(VkImage image, VmaAllocation_T* allocation) { vmaDestroyImage(vk_context::get().allocator, image, allocation); }
 }

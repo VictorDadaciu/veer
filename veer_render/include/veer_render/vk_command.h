@@ -1,6 +1,6 @@
 #pragma once
 
-#include "buffer.h"
+#include "vk_buffer.h"
 #include "vk_sync.h"
 #include "vk_ptr.h"
 
@@ -22,6 +22,9 @@ struct vk_command_buffer : public vk_weak_ptr<VkCommandBuffer>
 
     void copy_buffer(const vk_buffer&, const vk_buffer&, size_t);
     void copy_buffer(const vk_buffer& source, const vk_buffer& target) { copy_buffer(source, target, target.size); }
+
+    void pipeline_barrier(const VkDependencyInfo&);
+    void copy_buffer_to_image(const VkCopyBufferToImageInfo2&);
 
     using parent_type = vk_weak_ptr<VkCommandBuffer>;
     using parent_type::parent_type;

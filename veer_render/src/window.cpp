@@ -22,7 +22,7 @@ error_code vk_surface::init(const window* win)
 
 error_code window::open(c_string name, size_t width, size_t height)
 {
-    trace("Creating window \"{}\"", name);
+    info("Opening window \"{}\"", name);
     vk = SDL_CreateWindow(name, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     if (!vk)
         return error(error_code::initialization, "Failed to create SDL window");
@@ -66,7 +66,7 @@ size_t window::height() const
 
 void window::close()
 {
-    trace("Closing window \"{}\"", title());
+    info("Closing window \"{}\"", title());
     vk_context::get().device.wait_idle();
     swapchain.destroy();
     surface.destroy();

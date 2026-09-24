@@ -25,84 +25,59 @@ error_code ktx2_texture_wrapper::load(const std::string& path)
 
 error_code ktx2_texture_wrapper::initialize_texture(ve::texture& new_tex)
 {
-    SAFE_JUST_INIT(new_tex, m_ktx);
+    new_tex.metadata.width = m_ktx->baseWidth;
+    new_tex.metadata.height = m_ktx->baseHeight;
+    new_tex.metadata.size = m_ktx->dataSize;
+    new_tex.metadata.format = ktxTexture2_GetVkFormat(m_ktx);
+    new_tex.metadata.mip_levels = m_ktx->numLevels;
+    
+    VkImageCreateInfo tex_image_create_info{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = new_tex.metadata.format,
+        .extent = { 
+            .width = static_cast<uint32_t>(new_tex.metadata.width),
+            .height = static_cast<uint32_t>(new_tex.metadata.height),
+            .depth = 1
+        },
+        .mipLevels = new_tex.metadata.mip_levels,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+    };
+    VmaAllocationCreateInfo tex_image_alloc_create_info{
+        .usage = VMA_MEMORY_USAGE_AUTO
+    };
+    if (FAILED(vmaCreateImage(vk_context::get().allocator, &tex_image_create_info, &tex_image_alloc_create_info, new_tex.write(), new_tex.allocation().write(), nullptr)))
+        return error(error_code::allocation, "Failed to allocate texture");
 
     auto& staging = staging_buffer::get();
     staging.wait_until_finished_transfering();
     SAFE_CALL(staging.resize_if_needed(m_ktx->dataSize));
     staging.copy_to_mapped(reinterpret_cast<void*>(m_ktx->pData), m_ktx->dataSize);
-
-    vk_command_buffer SAFE_CALL_HANDLE_EXPECTED_NEW_MOVE(cmd_buf, vk_context::get().allocate_cmd_buffer());
+    
+    std::vector<VkBufferImageCopy2> copy_regions{};
+    for (uint8_t i = 0; i < new_tex.metadata.mip_levels; ++i)
     {
-        SAFE_CALL(cmd_buf.begin());
-        
-        VkImageMemoryBarrier2 barrier_tex_image{
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
-            .srcAccessMask = VK_ACCESS_2_NONE,
-            .dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-            .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            .image = new_tex,
-            .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = new_tex.m_metadata.mip_levels, .layerCount = 1 }
-        };
-
-        VkDependencyInfo barrier_tex_info{
-            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-            .imageMemoryBarrierCount = 1,
-            .pImageMemoryBarriers = &barrier_tex_image
-        };
-        vkCmdPipelineBarrier2(cmd_buf, &barrier_tex_info);
-
-        std::vector<VkBufferImageCopy2> copy_regions{};
-        for (uint8_t i = 0; i < new_tex.m_metadata.mip_levels; ++i)
-        {
-            size_t mip_offset{};
-            if (FAILED(ktxTexture2_GetImageOffset(m_ktx, i, 0, 0, &mip_offset)))
-                return error(error_code::texture, "Failed to get image mipmap offset");
-            copy_regions.push_back({
-                .sType = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2,
-                .bufferOffset = mip_offset,
-                .imageSubresource{ .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = i, .layerCount = 1 },
-                .imageExtent{
-                    .width = static_cast<uint32_t>(new_tex.m_metadata.width >> i),
-                    .height = static_cast<uint32_t>(new_tex.m_metadata.height >> i),
-                    .depth = 1
-                }
-            });
-        }
-
-        VkCopyBufferToImageInfo2 copy_buf_to_image_info{
-            .sType = VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2,
-            .srcBuffer = staging,
-            .dstImage = new_tex,
-            .dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            .regionCount = static_cast<uint32_t>(copy_regions.size()),
-            .pRegions = copy_regions.data()
-        };
-        vkCmdCopyBufferToImage2(cmd_buf, &copy_buf_to_image_info);
-
-        VkImageMemoryBarrier2 barrier_tex_read{
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-            .srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-            .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
-            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            .newLayout = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
-            .image = new_tex,
-            .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = new_tex.m_metadata.mip_levels, .layerCount = 1 }
-        };
-        barrier_tex_info.pImageMemoryBarriers = &barrier_tex_read;
-        vkCmdPipelineBarrier2(cmd_buf, &barrier_tex_info);
-
-        SAFE_CALL(cmd_buf.end());
+        size_t mip_offset{};
+        if (FAILED(ktxTexture2_GetImageOffset(m_ktx, i, 0, 0, &mip_offset)))
+            return error(error_code::texture, "Failed to get image mipmap offset");
+        copy_regions.push_back({
+            .sType = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2,
+            .bufferOffset = mip_offset,
+            .imageSubresource{ .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .mipLevel = i, .layerCount = 1 },
+            .imageExtent{
+                .width = static_cast<uint32_t>(new_tex.metadata.width >> i),
+                .height = static_cast<uint32_t>(new_tex.metadata.height >> i),
+                .depth = 1
+            }
+        });
     }
-    staging.fence.reset();
-    SAFE_CALL(cmd_buf.submit(vk_context::get().queue, staging.fence));
+    SAFE_CALL(staging.transfer_to_image(new_tex, copy_regions));
 
-    return error_code::success;
+    return new_tex.init();
 }
 
 ktx2_texture_wrapper::~ktx2_texture_wrapper()
