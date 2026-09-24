@@ -26,4 +26,7 @@ void destroy(VkSampler sampler) { vkDestroySampler(vk_context::get().device, sam
 void destroy(VkCommandPool pool) { vkDestroyCommandPool(vk_context::get().device, pool, nullptr); }
 void destroy(VkBuffer buffer, VmaAllocation_T* allocation) { vmaDestroyBuffer(vk_context::get().allocator, buffer, allocation); }
 void destroy(VkImage image, VmaAllocation_T* allocation) { vmaDestroyImage(vk_context::get().allocator, image, allocation); }
+void destroy(VkShaderModule module) { vkDestroyShaderModule(vk_context::get().device, module, nullptr); }
+void destroy(VkPipelineLayout layout) { vkDestroyPipelineLayout(vk_context::get().device, layout, nullptr); }
+void destroy(VkPipeline pipeline) { vkDestroyPipeline(vk_context::get().device, pipeline, nullptr); }
 }

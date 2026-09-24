@@ -1,60 +1,37 @@
 #pragma once
 
+#include "vk_ptr.h"
+
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
-#include <vulkan/vulkan.h>
-
 namespace ve
 {
-struct vk_shader_module
+struct vk_shader_module : public vk_unique_ptr<VkShaderModule>
 {
     VEER_DECLARE_NO_COPY(vk_shader_module);
-
-    vk_shader_module(vk_shader_module&& other)
-    : vk(other.vk)
-    {
-        other.vk = nullptr;
-    }
-
-    vk_shader_module& operator=(vk_shader_module&& other)
-    {
-        vk = other.vk;
-        other.vk = nullptr;
-        return *this;
-    }
+    vk_shader_module(vk_shader_module&& other) = default;
+    vk_shader_module& operator=(vk_shader_module&&) = default;
 
     error_code init(const byte_span&);
-    void destroy();
-
-    ~vk_shader_module() = default;
-
-    VkShaderModule vk{};
+    using vk_unique_ptr<VkShaderModule>::destroy;
 };
 
-struct vk_pipeline
+struct vk_pipeline : vk_unique_ptr<VkPipeline>
 {
     VEER_DECLARE_NO_COPY(vk_pipeline);
-
-    vk_pipeline(vk_pipeline&& other)
-    : vk(other.vk)
-    {
-        other.vk = nullptr;
-    }
-
-    vk_pipeline& operator=(vk_pipeline&& other)
-    {
-        vk = other.vk;
-        other.vk = nullptr;
-        return *this;
-    }
+    vk_pipeline(vk_pipeline&&) = default;
+    vk_pipeline& operator=(vk_pipeline&&) = default;
 
     error_code init(const byte_span&);
     error_code init(const vk_shader_module&);
-    void destroy();
+    
+    void destroy()
+    {
+        vk_unique_ptr<VkPipeline>::destroy();
+        layout.destroy();
+    }
 
-    ~vk_pipeline() = default;
-
-    VkPipeline vk{};
+    vk_unique_ptr<VkPipelineLayout> layout{};
 };
 }

@@ -86,9 +86,8 @@ std::expected<byte_span, error_code> load_slang_shader(const std::string& path)
     };
 }
 
-std::expected<size_t, error_code> create_pipeline_from_source(const std::string& path)
+std::expected<size_t, error_code> create_pipeline(const byte_span& code)
 {
-    byte_span SAFE_CALL_EXPECTED(code, load_slang_shader(path));
     vk_pipeline pipeline{};
     SAFE_CALL_RETURN_EXPECTED(pipeline.init(code));
     size_t ret = pipelines.size();
@@ -96,14 +95,16 @@ std::expected<size_t, error_code> create_pipeline_from_source(const std::string&
     return ret;
 }
 
+std::expected<size_t, error_code> create_pipeline_from_source(const std::string& path)
+{
+    byte_span SAFE_CALL_EXPECTED(code, load_slang_shader(path));
+    return create_pipeline(code);
+}
+
 std::expected<size_t, error_code> create_pipeline_from_binary(const std::string& path)
 {
     byte_span SAFE_CALL_EXPECTED(code, file::read_entire_file(path));
-    vk_pipeline pipeline{};
-    SAFE_CALL_RETURN_EXPECTED(pipeline.init(code));
-    size_t ret = pipelines.size();
-    pipelines.push_back(std::move(pipeline));
-    return ret;
+    return create_pipeline(code);
 }
 }
 

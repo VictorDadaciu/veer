@@ -22,4 +22,7 @@ void destroy(VkSampler);
 void destroy(VkCommandPool);
 void destroy(VkBuffer, VmaAllocation_T*);
 void destroy(VkImage, VmaAllocation_T*);
+void destroy(VkShaderModule);
+void destroy(VkPipelineLayout);
+void destroy(VkPipeline);
 }

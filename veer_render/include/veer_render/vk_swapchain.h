@@ -32,7 +32,8 @@ struct vk_swapchain : public vk_unique_ptr<VkSwapchainKHR>
 
     std::vector<vk_swapchain_link> links{};
     VkExtent2D extent{};
-    VkFormat depth_format;
     vk_viewed_image depth_image{};
+    VkFormat image_format;
+    VkFormat depth_format;
 };
 }

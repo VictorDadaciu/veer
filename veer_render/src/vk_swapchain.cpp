@@ -49,11 +49,12 @@ error_code vk_swapchain::init(const window* win)
         };
     }
 
+    image_format = VK_FORMAT_B8G8R8A8_SRGB;
     VkSwapchainCreateInfoKHR swapchain_create_info{
         .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
         .surface = win->surface,
         .minImageCount = win->surface.capabilities.minImageCount,
-        .imageFormat = VK_FORMAT_B8G8R8A8_SRGB,
+        .imageFormat = image_format,
         .imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR,
         .imageExtent{.width = extent.width, .height = extent.height},
         .imageArrayLayers = 1,
