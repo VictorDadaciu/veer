@@ -371,6 +371,7 @@ std::expected<std::vector<vk_weak_ptr<VkDescriptorSet>>, error_code> vk_descript
 
 error_code vk_frame_context::init()
 {
+    SAFE_JUST_INIT(data);
     SAFE_JUST_INIT(pool);
     SAFE_CALL_HANDLE_EXPECTED_MOVE(command_buffer, pool.allocate_cmd_buffer());
     SAFE_JUST_INIT(image_acquired_semaphore);
@@ -383,6 +384,7 @@ void vk_frame_context::destroy()
     image_acquired_semaphore.destroy();
     render_start_fence.destroy();
     pool.destroy();
+    data.destroy();
 }
 
 error_code vk_context::init()

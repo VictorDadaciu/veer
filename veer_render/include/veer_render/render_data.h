@@ -25,7 +25,9 @@ struct render_data
     render_data& operator=(render_data&&) = default;
 
     error_code init();
+    void destroy();
 
-    vk_buffer ubo{};
+    persistently_mapped_buffer ubo{};
+    VkDeviceAddress device_address{};
 };
 }

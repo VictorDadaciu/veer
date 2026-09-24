@@ -16,7 +16,7 @@
 namespace ve
 {
 // TODO: make easier to use, make thread-safe etc.
-struct staging_buffer : public vk_buffer
+struct staging_buffer : public persistently_mapped_buffer
 {
     error_code init(size_t);
     error_code resize_if_needed(size_t);
@@ -30,7 +30,6 @@ struct staging_buffer : public vk_buffer
     void wait_until_finished_transfering() noexcept;
     bool is_transfering() const noexcept;
 
-    std::byte* mapped{};
     vk_fence fence{};
     
     _VEER_SINGLETON(staging_buffer);

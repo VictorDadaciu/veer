@@ -1,5 +1,6 @@
 #pragma once
 
+#include "render_data.h"
 #include "vk_command.h"
 #include "vk_sync.h"
 #include "vk_ptr.h"
@@ -69,6 +70,7 @@ struct vk_frame_context
     error_code init();
     void destroy();
 
+    render_data data{};
     vk_command_pool pool{};
     // TODO: command buffers will need to be somewhere else, but will do for now
     vk_command_buffer command_buffer{};

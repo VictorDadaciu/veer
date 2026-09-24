@@ -17,4 +17,10 @@ struct vk_buffer : public vk_allocated_ptr<VkBuffer>
     using vk_allocated_ptr<VkBuffer>::destroy;
     size_t size{};
 };
+
+struct persistently_mapped_buffer : vk_buffer
+{
+    using vk_buffer::destroy;
+    std::byte* mapped{};
+};
 }
