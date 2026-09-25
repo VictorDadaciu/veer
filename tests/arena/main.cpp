@@ -111,10 +111,8 @@ void run_gfx()
         {
             ve::window win;
             auto _ = win.open("Arena");
-            static size_t it = 0;
-            while (true)
-                if (++it >= 1000)
-                    break;
+            while (true) // handle loop and inputs better
+                auto _ = ve::gfx::draw(win);
             win.close();
         }
         ve::gfx::destroy();

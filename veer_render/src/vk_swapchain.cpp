@@ -129,6 +129,13 @@ error_code vk_swapchain::init(const window* win)
     return error_code::success;
 }
 
+vk_swapchain_link& vk_swapchain::acquire_next(const vk_semaphore& semaphore)
+{
+    uint32_t image_index;
+    vkAcquireNextImageKHR(vk_context::get().device, vk, std::numeric_limits<size_t>::max(), semaphore, nullptr, &image_index);
+    return links[image_index];
+}
+
 void vk_swapchain::destroy()
 {
     depth_image.destroy();

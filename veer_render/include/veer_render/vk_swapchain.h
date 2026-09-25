@@ -30,6 +30,8 @@ struct vk_swapchain : public vk_unique_ptr<VkSwapchainKHR>
     error_code init(const window* win);
     void destroy();
 
+    vk_swapchain_link& acquire_next(const vk_semaphore&);
+
     std::vector<vk_swapchain_link> links{};
     VkExtent2D extent{};
     vk_viewed_image depth_image{};

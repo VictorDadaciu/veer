@@ -23,6 +23,21 @@ error_code init()
     return error_code::success;
 }
 
+error_code draw(window& win)
+{
+    vk_context& ctx = vk_context::get();
+    vk_frame_context& frame = ctx.current_frame();
+
+    frame.render_start_fence.wait();
+    frame.render_start_fence.reset();
+
+    auto& link = win.swapchain.acquire_next(frame.image_acquired_semaphore);
+
+    
+
+    return error_code::success;
+}
+
 void destroy()
 {
     vk_context::get().device.wait_idle();
