@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21..4.4)
 set(VEER_RENDER_SOURCES
     src/assets.cpp
     src/graphics.cpp
+    src/inputs.cpp
     src/mesh.cpp
     src/render_data.cpp
     src/shader.cpp
@@ -16,7 +17,6 @@ set(VEER_RENDER_SOURCES
     src/vk_utils.cpp
     src/window.cpp
 
-    src/asset_manager.cpp
     src/gltf.cpp
     src/ktx2.cpp
 )
@@ -42,6 +42,7 @@ set(VEER_RENDER_HEADERS
 
     include/internal/asset_manager.h
     include/internal/gltf.h
+    include/internal/input_manager.h
     include/internal/ktx2.h
 )
 

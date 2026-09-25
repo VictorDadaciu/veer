@@ -6,7 +6,7 @@
 
 namespace ve
 {
-static const std::unordered_set<std::string_view> attribute_names = {
+static const std::unordered_set<std::string> attribute_names = {
     POSITION_ATTRIBUTE_NAME,
     NORMAL_ATTRIBUTE_NAME,
     TANGENT_ATTRIBUTE_NAME, 

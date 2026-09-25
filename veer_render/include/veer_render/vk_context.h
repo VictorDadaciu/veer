@@ -70,6 +70,8 @@ struct vk_frame_context
     error_code init();
     void destroy();
 
+    void commit();
+
     render_data data{};
     vk_command_pool pool{};
     // TODO: command buffers will need to be somewhere else, but will do for now

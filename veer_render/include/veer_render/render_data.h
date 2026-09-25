@@ -27,6 +27,7 @@ struct render_data
     error_code init();
     void destroy();
 
+    shader_data data{};
     persistently_mapped_buffer ubo{};
     VkDeviceAddress device_address{};
 };

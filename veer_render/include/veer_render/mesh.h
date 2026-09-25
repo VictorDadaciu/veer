@@ -2,6 +2,7 @@
 
 #include "vk_buffer.h"
 
+#include <cassert>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
@@ -9,15 +10,14 @@
 
 namespace ve
 {
-using namespace std::string_view_literals;
-constexpr std::string_view POSITION_ATTRIBUTE_NAME   = "POSITION"sv;
-constexpr std::string_view NORMAL_ATTRIBUTE_NAME     = "NORMAL"sv;
-constexpr std::string_view TANGENT_ATTRIBUTE_NAME    = "TANGENT"sv;
-constexpr std::string_view TEXCOORD_0_ATTRIBUTE_NAME = "TEXCOORD_0"sv;
-constexpr std::string_view TEXCOORD_1_ATTRIBUTE_NAME = "TEXCOORD_1"sv;
-constexpr std::string_view COLOR_0_ATTRIBUTE_NAME    = "COLOR_0"sv;
-constexpr std::string_view JOINTS_0_ATTRIBUTE_NAME   = "JOINTS_0"sv;
-constexpr std::string_view WEIGHTS_0_ATTRIBUTE_NAME  = "WEIGHTS_0"sv;
+const std::string POSITION_ATTRIBUTE_NAME   = "POSITION";
+const std::string NORMAL_ATTRIBUTE_NAME     = "NORMAL";
+const std::string TANGENT_ATTRIBUTE_NAME    = "TANGENT";
+const std::string TEXCOORD_0_ATTRIBUTE_NAME = "TEXCOORD_0";
+const std::string TEXCOORD_1_ATTRIBUTE_NAME = "TEXCOORD_1";
+const std::string COLOR_0_ATTRIBUTE_NAME    = "COLOR_0";
+const std::string JOINTS_0_ATTRIBUTE_NAME   = "JOINTS_0";
+const std::string WEIGHTS_0_ATTRIBUTE_NAME  = "WEIGHTS_0";
 
 enum class render_mode : uint8_t
 {
@@ -43,6 +43,18 @@ struct attribute_view
     uint8_t element_size() const noexcept { return component_size * component_count; }
 };
 
+inline VkIndexType as_index_type(size_t size)
+{
+    switch (size)
+    {
+        case 2: return VK_INDEX_TYPE_UINT16;
+        case 4: return VK_INDEX_TYPE_UINT32;
+        default:
+            assert(false);
+            return VK_INDEX_TYPE_NONE_KHR;
+    }
+}
+
 struct mesh;
 struct mesh_primitive
 {
@@ -52,10 +64,11 @@ struct mesh_primitive
     mesh_primitive& operator=(mesh_primitive&&) = default;
 
     mesh& parent() const noexcept;
-    bool indexed() const noexcept { return index_attribute_view.element_count > 0; }
+    bool is_indexed() const noexcept { return index_attribute_view.element_count > 0; }
 
     std::unordered_map<std::string, attribute_view> vertex_attribute_views{};
     attribute_view index_attribute_view{};
+    size_t vertex_count{};
     size_t parent_index{};
     render_mode mode;
 };

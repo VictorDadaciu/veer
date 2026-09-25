@@ -41,7 +41,7 @@ error_code vk_pipeline::init(const vk_shader_module& module)
     VkPipelineLayoutCreateInfo pipeline_layout_create_info{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = 1,
-        .pSetLayouts = vk_context::get().layout.write(),
+        .pSetLayouts = vk_context::get().layout.read(),
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &push_constant_range
     };

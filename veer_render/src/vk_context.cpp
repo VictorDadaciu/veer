@@ -340,7 +340,7 @@ std::expected<vk_weak_ptr<VkDescriptorSet>, error_code> vk_descriptor_pool::allo
         .pNext = &variable_desc_count_alloc_info,
         .descriptorPool = vk_context::get().desc_pool,
         .descriptorSetCount = 1,
-        .pSetLayouts = layout.write()
+        .pSetLayouts = layout.read()
     };
     vk_weak_ptr<VkDescriptorSet> ret{};
     if (FAILED(vkAllocateDescriptorSets(vk_context::get().device, &tex_desc_set_alloc, ret.write())))
@@ -361,7 +361,7 @@ std::expected<std::vector<vk_weak_ptr<VkDescriptorSet>>, error_code> vk_descript
         .pNext = &variable_desc_count_alloc_info,
         .descriptorPool = vk_context::get().desc_pool,
         .descriptorSetCount = static_cast<uint32_t>(n),
-        .pSetLayouts = layout.write()
+        .pSetLayouts = layout.read()
     };
     std::vector<vk_weak_ptr<VkDescriptorSet>> ret(n);
     if (FAILED(vkAllocateDescriptorSets(vk_context::get().device, &tex_desc_set_alloc, reinterpret_cast<VkDescriptorSet*>(ret.data()))))
@@ -377,6 +377,11 @@ error_code vk_frame_context::init()
     SAFE_JUST_INIT(image_acquired_semaphore);
     SAFE_JUST_INIT(render_start_fence);
     return error_code::success;
+}
+
+void vk_frame_context::commit()
+{
+    memcpy(data.ubo.mapped, &data.data, sizeof(shader_data));
 }
 
 void vk_frame_context::destroy()

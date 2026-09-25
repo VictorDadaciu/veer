@@ -48,22 +48,6 @@ error_code window::size(size_t& width, size_t& height) const
     return error_code::success;
 }
 
-size_t window::width() const
-{
-    size_t w{}, h{};
-    if (size(w, h) == error_code::window)
-        return 0;
-    return w;
-}
-
-size_t window::height() const
-{
-    size_t w{}, h{};
-    if (size(w, h) == error_code::window)
-        return 0;
-    return h;
-}
-
 void window::close()
 {
     info("Closing window \"{}\"", title());

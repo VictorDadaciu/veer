@@ -44,6 +44,7 @@ public:
     vk_res operator*() noexcept { return this->vk; }
     vk_res operator*() const noexcept { return this->vk; }
 
+    const vk_res* read() const noexcept { return &this->vk; }
     vk_res* write() noexcept { return &this->vk; }
 
 protected:

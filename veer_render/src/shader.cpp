@@ -9,6 +9,7 @@
 #include <slang/slang-com-ptr.h>
 
 #include <array>
+#include <cassert>
 #include <vector>
 
 namespace
@@ -128,6 +129,12 @@ std::expected<size_t, error_code> load(const std::string& path)
     {
         return std::unexpected(error(error_code::wrong_file_type, "Invalid shader file type \"{}\"", path));
     }
+}
+
+vk_pipeline& get(size_t index)
+{
+    assert(index < pipelines.size());
+    return pipelines[index];
 }
 
 void destroy_all()

@@ -54,6 +54,13 @@ std::expected<std::vector<vk_weak_ptr<VkCommandBuffer>>, error_code> vk_command_
     return cmd_bufs;
 }
 
+error_code vk_command_buffer::reset()
+{
+    if (FAILED(vkResetCommandBuffer(vk, 0)))
+        return error(error_code::command_record, "Failed to reset command buffer");
+    return error_code::success;
+}
+
 error_code vk_command_buffer::begin(bool single_submit)
 {
     VkCommandBufferBeginInfo cmd_buffer_begin_info{
@@ -63,6 +70,56 @@ error_code vk_command_buffer::begin(bool single_submit)
     if (FAILED(vkBeginCommandBuffer(vk, &cmd_buffer_begin_info)))
         return error(error_code::command_record, "Failed to begin command buffer recording");
     return error_code::success;
+}
+
+void vk_command_buffer::begin_render(const VkRenderingInfo& info)
+{
+    vkCmdBeginRendering(vk, &info);
+}
+
+void vk_command_buffer::set_viewport_and_scissor(const VkViewport& vp, const VkRect2D& scissor)
+{
+    vkCmdSetViewport(vk, 0, 1, &vp);
+    vkCmdSetScissor(vk, 0, 1, &scissor);
+}
+
+void vk_command_buffer::bind_pipeline(const vk_unique_ptr<VkPipeline>& pipeline)
+{
+    vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+}
+
+void vk_command_buffer::bind_texture(const texture& tex, const vk_unique_ptr<VkPipelineLayout>& layout)
+{
+    vkCmdBindDescriptorSets(vk, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, tex.descriptor.read(), 0, nullptr);
+}
+
+void vk_command_buffer::draw_mesh(const mesh& m, size_t instances)
+{
+    if (instances == 0)
+    {
+        warn("Cannot draw 0 instances of a mesh");
+        return;
+    }
+    for (auto& primitive : m.primitives)
+    {
+        std::vector<VkBuffer> buffers(primitive.vertex_attribute_views.size(), m);
+        std::vector<VkDeviceSize> offsets {
+            primitive.vertex_attribute_views.at(POSITION_ATTRIBUTE_NAME).byte_offset,
+            primitive.vertex_attribute_views.at(NORMAL_ATTRIBUTE_NAME).byte_offset,
+            primitive.vertex_attribute_views.at(TEXCOORD_0_ATTRIBUTE_NAME).byte_offset
+        };
+        vkCmdBindVertexBuffers(vk, 0, 3, buffers.data(), offsets.data());
+        if (primitive.is_indexed())
+        {
+            auto& index_view = primitive.index_attribute_view;
+            vkCmdBindIndexBuffer(vk, m, index_view.byte_offset, as_index_type(index_view.component_size));
+            vkCmdDrawIndexed(vk, index_view.element_count, instances, 0, 0, 0);
+        }
+        else
+        {
+            vkCmdDraw(vk, primitive.vertex_count, instances, 0, 0);
+        }
+    }
 }
 
 error_code vk_command_buffer::end()

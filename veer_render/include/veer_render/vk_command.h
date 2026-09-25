@@ -1,7 +1,9 @@
 #pragma once
 
-#include "vk_buffer.h"
+#include "mesh.h"
+#include "texture.h"
 #include "vk_sync.h"
+#include "vk_pipeline.h"
 #include "vk_ptr.h"
 
 #include <veer_core/error_code.h>
@@ -16,7 +18,13 @@ namespace ve
 {
 struct vk_command_buffer : public vk_weak_ptr<VkCommandBuffer>
 {
+    error_code reset();
     error_code begin(bool=true);
+    void begin_render(const VkRenderingInfo&);
+    void set_viewport_and_scissor(const VkViewport&, const VkRect2D&);
+    void bind_pipeline(const vk_unique_ptr<VkPipeline>&);
+    void bind_texture(const texture&, const vk_unique_ptr<VkPipelineLayout>&);
+    void draw_mesh(const mesh&, size_t=1);
     error_code end();
     error_code submit(vk_weak_ptr<VkQueue>, vk_weak_ptr<VkFence> = nullptr);
 

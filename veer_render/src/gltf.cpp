@@ -97,6 +97,7 @@ error_code gltf_model_wrapper::initialize_mesh(ve::mesh& new_mesh, size_t mesh_i
             size_t buffer_index = get_buffer_and_update_buffers_if_needed(new_mesh, buffer_view.buffer);
 
             std::string attribute_name = std::string(kv.key.data, kv.key.len);
+            new_primitive.vertex_count = accessor.count;
             new_primitive.vertex_attribute_views[attribute_name] = attribute_view{
                 .buffer_view_index = buffer_index,
                 .byte_offset = buffer_view.byte_offset + accessor.byte_offset,

@@ -25,9 +25,30 @@ public:
 
     c_string title() const;
 
-    size_t width() const;
-    size_t height() const;
     error_code size(size_t& width, size_t& height) const;
+    size_t width() const
+    {
+        size_t w{}, h{};
+        if (size(w, h) == error_code::window)
+            return 0;
+        return w;
+    }
+
+    size_t height() const
+    {
+        size_t w{}, h{};
+        if (size(w, h) == error_code::window)
+            return 0;
+        return h;
+    }
+
+    float aspect_ratio() const
+    {
+        size_t w{}, h{};
+        if (size(w, h) == error_code::window)
+            return 0.f;
+        return static_cast<float>(w) / static_cast<float>(h);
+    }
     
     vk_surface surface{};
     vk_swapchain swapchain{};
