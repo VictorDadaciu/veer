@@ -6,7 +6,6 @@
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
-#include <expected>
 #include <limits>
 
 namespace ve

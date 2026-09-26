@@ -15,9 +15,9 @@ namespace ve
 {
 error_code ktx2_texture_wrapper::load(const std::string& path)
 {
-    if (FAILED(ktxTexture2_CreateFromNamedFile(path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &m_ktx)))
+    if (LEGACY_FAILED(ktxTexture2_CreateFromNamedFile(path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &m_ktx)))
         return error(error_code::texture, "Failed to create texture from \"{}\"", path);
-    if (ktxTexture2_NeedsTranscoding(m_ktx) && FAILED(ktxTexture2_TranscodeBasis(m_ktx, KTX_TTF_BC7_RGBA, 0)))
+    if (ktxTexture2_NeedsTranscoding(m_ktx) && LEGACY_FAILED(ktxTexture2_TranscodeBasis(m_ktx, KTX_TTF_BC7_RGBA, 0)))
         return error(error_code::texture, "Failed to transcode texture to suitable format");
     return error_code::success;
 }
@@ -49,7 +49,7 @@ error_code ktx2_texture_wrapper::initialize_texture(ve::texture& new_tex)
     VmaAllocationCreateInfo tex_image_alloc_create_info{
         .usage = VMA_MEMORY_USAGE_AUTO
     };
-    if (FAILED(vmaCreateImage(vk_context::get().allocator, &tex_image_create_info, &tex_image_alloc_create_info, new_tex.write(), new_tex.allocation().write(), nullptr)))
+    if (LEGACY_FAILED(vmaCreateImage(vk_context::get().allocator, &tex_image_create_info, &tex_image_alloc_create_info, new_tex.write(), new_tex.allocation().write(), nullptr)))
         return error(error_code::allocation, "Failed to allocate texture");
 
     auto& staging = staging_buffer::get();
@@ -61,7 +61,7 @@ error_code ktx2_texture_wrapper::initialize_texture(ve::texture& new_tex)
     for (uint8_t i = 0; i < new_tex.metadata.mip_levels; ++i)
     {
         size_t mip_offset{};
-        if (FAILED(ktxTexture2_GetImageOffset(m_ktx, i, 0, 0, &mip_offset)))
+        if (LEGACY_FAILED(ktxTexture2_GetImageOffset(m_ktx, i, 0, 0, &mip_offset)))
             return error(error_code::texture, "Failed to get image mipmap offset");
         copy_regions.push_back({
             .sType = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2,

@@ -9,6 +9,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <cassert>
 #include <vector>
 
 struct VmaAllocation_T;
@@ -31,11 +32,22 @@ struct vk_swapchain : public vk_unique_ptr<VkSwapchainKHR>
     void destroy();
 
     vk_swapchain_link& acquire_next(const vk_semaphore&);
+    vk_swapchain_link& current_link() noexcept
+    {
+        assert(current_image_index < links.size());
+        return links[current_image_index];
+    }
+    const vk_swapchain_link& current_link() const noexcept
+    {
+        assert(current_image_index < links.size());
+        return links[current_image_index];
+    }
 
     std::vector<vk_swapchain_link> links{};
     VkExtent2D extent{};
     vk_viewed_image depth_image{};
     VkFormat image_format;
     VkFormat depth_format;
+    uint32_t current_image_index{};
 };
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <type_traits>
+#include <expected>
 
 namespace ve
 {
@@ -27,9 +27,14 @@ enum class error_code
 
     unknown,
 };
+
+inline constexpr bool failed(error_code code)
+{
+    return code != error_code::success;
+}
 }
 
-#define VEER_FAILED(call) call != 0
+#define VEER_LEGACY_FAILED(call) call != 0
 
 #define VEER_SAFE_CALL(call)            \
 {                                       \
@@ -41,7 +46,7 @@ enum class error_code
 #define VEER_SAFE_CALL_EXPECTED(ret, call) ret; \
 {                                               \
     auto res = call;                            \
-    if (!res.has_value())                       \
+    if (!res)                       \
         return std::unexpected(res.error());    \
     ret = *res;                                 \
 }
@@ -56,7 +61,7 @@ enum class error_code
 #define VEER_SAFE_CALL_HANDLE_EXPECTED(ret, call)   \
 {                                                   \
     auto res = call;                                \
-    if (!res.has_value())                           \
+    if (!res)                           \
         return res.error();                         \
     ret = *res;                                     \
 }
@@ -64,7 +69,7 @@ enum class error_code
 #define VEER_SAFE_CALL_HANDLE_EXPECTED_MOVE(ret, call)  \
 {                                                       \
     auto res = call;                                    \
-    if (!res.has_value())                               \
+    if (!res)                               \
         return res.error();                             \
     ret = std::move(*res);                              \
 }
@@ -75,7 +80,7 @@ enum class error_code
 #define VEER_SAFE_INIT(var, ...) var; VEER_SAFE_JUST_INIT(var, __VA_ARGS__)
 
 #ifndef VEER_KEEP_PREFIX
-#define FAILED                              VEER_FAILED
+#define LEGACY_FAILED                       VEER_LEGACY_FAILED
 #define SAFE_CALL                           VEER_SAFE_CALL
 #define SAFE_CALL_EXPECTED                  VEER_SAFE_CALL_EXPECTED
 #define SAFE_CALL_RETURN_EXPECTED           VEER_SAFE_CALL_RETURN_EXPECTED

@@ -117,7 +117,7 @@ void run_db()
 uint8_t load_shader()
 {
     auto res = ve::shader::load("tests/assets/triangle.slang");
-    if (!res.has_value())
+    if (!res)
         return std::numeric_limits<uint8_t>::max();
     return static_cast<uint8_t>(*res);
 }
@@ -125,7 +125,7 @@ uint8_t load_shader()
 uint8_t load_asset(const std::string& path)
 {
     auto res = ve::assets::load(path);
-    if (!res.has_value())
+    if (!res)
         return std::numeric_limits<uint8_t>::max();
     return static_cast<uint8_t>((*res)[0].index);
 }
@@ -139,7 +139,7 @@ void initialize_db()
     for (size_t i = 0; i < 3; ++i)
     {
         objects::row row{};
-        row.cell<position3>() = glm::vec3(i, 0, 0);
+        row.cell<position3>() = glm::vec3(4.5f * (i - 1.f), 0, 0);
         row.cell<tex_i>() = tex_index;
         row.cell<mesh_i>() = mesh_index;
         row.cell<shader_i>() = shader_index;
@@ -149,7 +149,7 @@ void initialize_db()
 
 void run_gfx()
 {
-    if (ve::gfx::init() == ve::error_code::success)
+    if (!ve::failed(ve::gfx::init()))
     {
         ve::window win;
         auto _ = win.open("Arena");
@@ -157,8 +157,8 @@ void run_gfx()
         initialize_db();
         for (auto& frame : ctx.frames)
         {
-            frame.data.data.proj = glm::perspective(glm::radians(60.0f), win.aspect_ratio(), 0.1f, 32.0f);
-            frame.data.data.view = glm::translate(glm::mat4(1.0f), glm::vec3(-1.f, 0.f, 0.f));
+            frame.data.data.proj = glm::perspective(glm::radians(60.0f), win.aspect_ratio(), 0.1f, 128.0f);
+            frame.data.data.view = glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f));
         }
         // TODO: actually handle correctly
         auto row = db::row<objects>(0);
@@ -173,31 +173,39 @@ void run_gfx()
                 break;
             
             auto& frame = ctx.current_frame();
-            db::iterate<SELECT(position3, tex_i, mesh_i), FROM(objects)>
+            static float angle = 0.f;
+            if (ve::inputs::pressing())
+                angle += glm::radians(2.f);
+            frame.data.data.view = glm::rotate(glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f)), angle, glm::vec3(0.f, 1.f, 0.f));
+
+            static float time = 0.f;
+            time += 0.016;
+            db::iterate<SELECT(position3), FROM(objects)>
             (
-                [&frame](const auto& e, auto& pos, auto& tex, auto& mesh)
+                [&frame](const auto& e, auto& pos)
                 {
                     size_t i = static_cast<size_t>(e);
-                    frame.data.data.model[i] = glm::translate(glm::mat4(1.f), pos);
+                    pos.y = std::sin(time + i);
+                    frame.data.data.model[i] = glm::rotate(glm::translate(glm::mat4(1), pos), glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
                 }
             );
             frame.commit();
 
-            ve::vk_command_buffer cb{};
+            auto cb = ve::gfx::begin_draw(win);
+            if (!cb)
             {
-                auto res = ve::gfx::begin_draw(win);
-                if (!res.has_value())
-                {
-                    ve::error("Failed to begin draw");
-                    break;
-                }
-                cb = std::move(*res);
+                ve::error("Failed to begin draw");
+                break;
             }
-            cb.bind_pipeline(pipeline);
-            cb.bind_texture(tex, pipeline.layout);
-            // TODO: make nicer
-            vkCmdPushConstants(cb, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(VkDeviceAddress), &frame.data.device_address);
-            cb.draw_mesh(mesh);
+            cb->bind_pipeline(pipeline);
+            cb->bind_texture(tex, pipeline.layout);
+            cb->push_constants(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, &frame.data.device_address);
+            cb->draw_mesh(mesh, db::count<objects>());
+            if (ve::failed(ve::gfx::end_draw(win, *cb)))
+            {
+                ve::error("Failed to end draw");
+                break;
+            }
 
             ctx.advance_frame();
         }
@@ -209,9 +217,9 @@ void run_gfx()
 
 int main()
 {
-    ve::log::init("arena", ve::log::level::trace);
+    ve::log::init("arena", ve::log::level::debug);  
 
-    run_db();
+    if (false) run_db();
     run_gfx();
     
     return 0;

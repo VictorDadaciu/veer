@@ -23,7 +23,7 @@ std::vector<vk_pipeline> pipelines{};
 error_code init_slang()
 {
     SlangGlobalSessionDesc desc{};
-    if (FAILED(slang::createGlobalSession(&desc, slang_global_session.writeRef())))
+    if (LEGACY_FAILED(slang::createGlobalSession(&desc, slang_global_session.writeRef())))
         return error(error_code::shader, "Failed to initialize slang global session");
 
     auto slang_targets{
@@ -40,32 +40,30 @@ error_code init_slang()
         }})
     };
 
-    c_string search_paths[] = { "/home/victordadaciu/workspace/veer/tests/assets" };
     slang::SessionDesc slang_session_desc{
         .targets{slang_targets.data()},
         .targetCount{static_cast<SlangInt>(slang_targets.size())},
         .defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR,
-        .searchPaths = search_paths,
-        .searchPathCount = 1,
         .compilerOptionEntries{slang_options.data()},
         .compilerOptionEntryCount{static_cast<uint32_t>(slang_options.size())}
     };
-    if (!slang_session && FAILED(slang_global_session->createSession(slang_session_desc, slang_session.writeRef())))
+    if (!slang_session && LEGACY_FAILED(slang_global_session->createSession(slang_session_desc, slang_session.writeRef())))
         return error(error_code::shader, "Failed to initialize slang session");
 
     return error_code::success;
 }
 
-std::expected<byte_span, error_code> load_slang_shader(const std::string& path)
+std::expected<std::string, error_code> load_slang_shader(const std::string& path)
 {
     if (!slang_global_session) SAFE_CALL_RETURN_EXPECTED(init_slang());
-    
+
+    std::string SAFE_CALL_EXPECTED(code, file::read_entire_file(path))
     Slang::ComPtr<ISlangBlob> errs{};
     Slang::ComPtr<slang::IModule> slang_module{
-        slang_session->loadModuleFromSource(
+        slang_session->loadModuleFromSourceString(
             file::stem(path).c_str(),
             file::absolute(path).c_str(),
-            nullptr,
+            code.c_str(),
             errs.writeRef()
         )
     };
@@ -77,17 +75,14 @@ std::expected<byte_span, error_code> load_slang_shader(const std::string& path)
     }
         
     Slang::ComPtr<ISlangBlob> spirv{};
-    if (FAILED(slang_module->getTargetCode(0, spirv.writeRef())))
+    if (LEGACY_FAILED(slang_module->getTargetCode(0, spirv.writeRef())))
         return std::unexpected(error(error_code::shader, "Failed to compiler shader code for \"{}\"", path));
 
     info("Loaded shader file: \"{}\" under name \"{}\"", path, file::stem(path));
-    return byte_span{
-        .data = reinterpret_cast<const std::byte*>(spirv->getBufferPointer()),
-        .size = spirv->getBufferSize()
-    };
+    return std::string(reinterpret_cast<const char*>(spirv->getBufferPointer()), spirv->getBufferSize());
 }
 
-std::expected<size_t, error_code> create_pipeline(const byte_span& code)
+std::expected<size_t, error_code> create_pipeline(const std::string& code)
 {
     vk_pipeline pipeline{};
     SAFE_CALL_RETURN_EXPECTED(pipeline.init(code));
@@ -98,13 +93,13 @@ std::expected<size_t, error_code> create_pipeline(const byte_span& code)
 
 std::expected<size_t, error_code> create_pipeline_from_source(const std::string& path)
 {
-    byte_span SAFE_CALL_EXPECTED(code, load_slang_shader(path));
+    std::string SAFE_CALL_EXPECTED(code, load_slang_shader(path));
     return create_pipeline(code);
 }
 
 std::expected<size_t, error_code> create_pipeline_from_binary(const std::string& path)
 {
-    byte_span SAFE_CALL_EXPECTED(code, file::read_entire_file(path));
+    std::string SAFE_CALL_EXPECTED(code, file::read_entire_file(path));
     return create_pipeline(code);
 }
 }

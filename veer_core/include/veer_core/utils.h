@@ -44,7 +44,7 @@ struct byte_span
         size = 0zu;
     }
 
-    const std::byte* data{};
+    std::byte* data{};
     size_t size{};
 };
 

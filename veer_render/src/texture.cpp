@@ -22,7 +22,7 @@ error_code texture::init()
         .format = metadata.format,
         .subresourceRange = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = metadata.mip_levels, .layerCount = 1 }
     };
-    if (FAILED(vkCreateImageView(vk_context::get().device, &tex_view_create_info, nullptr, view.write())))
+    if (LEGACY_FAILED(vkCreateImageView(vk_context::get().device, &tex_view_create_info, nullptr, view.write())))
         return error(error_code::initialization, "Failed to iniitalize texture's image view");
 
     VkSamplerCreateInfo sampler_create_info{
@@ -34,7 +34,7 @@ error_code texture::init()
         .maxAnisotropy = 8.0f,
         .maxLod = static_cast<float>(metadata.mip_levels)
     };
-    if (FAILED(vkCreateSampler(vk_context::get().device, &sampler_create_info, nullptr, sampler.write())))
+    if (LEGACY_FAILED(vkCreateSampler(vk_context::get().device, &sampler_create_info, nullptr, sampler.write())))
         return error(error_code::initialization, "Failed to create texture sampler");
 
     SAFE_CALL_HANDLE_EXPECTED(descriptor, vk_context::get().desc_pool.allocate_descriptor_set(vk_context::get().layout));

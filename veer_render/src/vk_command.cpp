@@ -16,7 +16,7 @@ error_code vk_command_pool::init(VkCommandPoolCreateFlags flags)
         .queueFamilyIndex = vk_context::get().queue.family
     };
 
-    if (FAILED(vkCreateCommandPool(vk_context::get().device, &command_pool_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateCommandPool(vk_context::get().device, &command_pool_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to initialize command pool");
 
     return error_code::success;
@@ -32,7 +32,7 @@ std::expected<vk_weak_ptr<VkCommandBuffer>, error_code> vk_command_pool::allocat
     };
 
     vk_weak_ptr<VkCommandBuffer> cmd_buf{};
-    if (FAILED(vkAllocateCommandBuffers(vk_context::get().device, &command_buffer_allocate_info, cmd_buf.write())))
+    if (LEGACY_FAILED(vkAllocateCommandBuffers(vk_context::get().device, &command_buffer_allocate_info, cmd_buf.write())))
         return std::unexpected(error(error_code::allocation, "Failed to allocate command buffer"));
 
     return cmd_buf;
@@ -49,14 +49,14 @@ std::expected<std::vector<vk_weak_ptr<VkCommandBuffer>>, error_code> vk_command_
     };
 
     std::vector<vk_weak_ptr<VkCommandBuffer>> cmd_bufs(n);
-    if (FAILED(vkAllocateCommandBuffers(vk_context::get().device, &command_buffer_allocate_info, cmd_bufs.data()->write())))
+    if (LEGACY_FAILED(vkAllocateCommandBuffers(vk_context::get().device, &command_buffer_allocate_info, cmd_bufs.data()->write())))
         return std::unexpected(error(error_code::allocation, "Failed to allocate {} command buffers", n));
     return cmd_bufs;
 }
 
 error_code vk_command_buffer::reset()
 {
-    if (FAILED(vkResetCommandBuffer(vk, 0)))
+    if (LEGACY_FAILED(vkResetCommandBuffer(vk, 0)))
         return error(error_code::command_record, "Failed to reset command buffer");
     return error_code::success;
 }
@@ -67,7 +67,7 @@ error_code vk_command_buffer::begin(bool single_submit)
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = single_submit ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : 0u,
     };
-    if (FAILED(vkBeginCommandBuffer(vk, &cmd_buffer_begin_info)))
+    if (LEGACY_FAILED(vkBeginCommandBuffer(vk, &cmd_buffer_begin_info)))
         return error(error_code::command_record, "Failed to begin command buffer recording");
     return error_code::success;
 }
@@ -83,22 +83,30 @@ void vk_command_buffer::set_viewport_and_scissor(const VkViewport& vp, const VkR
     vkCmdSetScissor(vk, 0, 1, &scissor);
 }
 
-void vk_command_buffer::bind_pipeline(const vk_unique_ptr<VkPipeline>& pipeline)
+void vk_command_buffer::bind_pipeline(const vk_weak_ptr<VkPipeline> pipeline)
 {
     vkCmdBindPipeline(vk, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
-void vk_command_buffer::bind_texture(const texture& tex, const vk_unique_ptr<VkPipelineLayout>& layout)
+void vk_command_buffer::bind_texture(const texture& tex, const vk_weak_ptr<VkPipelineLayout> layout)
 {
     vkCmdBindDescriptorSets(vk, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, 1, tex.descriptor.read(), 0, nullptr);
 }
 
+error_code vk_command_buffer::push_constants(const vk_weak_ptr<VkPipelineLayout> layout, VkShaderStageFlags stages, const void* data, size_t size, size_t offset)
+{
+    if (size == 0zu)
+        return warn(error_code::command_record, "Must specify >0 size when pushing constant");
+    vkCmdPushConstants(vk, layout, stages, offset, size, data);
+    return error_code::success;   
+}
+
 void vk_command_buffer::draw_mesh(const mesh& m, size_t instances)
 {
-    if (instances == 0)
+    if (instances == 0zu)
     {
-        warn("Cannot draw 0 instances of a mesh");
-        return;
+        warn("0 instances of a mesh requested, defaulting to 1");
+        instances = 1zu;
     }
     for (auto& primitive : m.primitives)
     {
@@ -122,9 +130,14 @@ void vk_command_buffer::draw_mesh(const mesh& m, size_t instances)
     }
 }
 
+void vk_command_buffer::end_render()
+{
+    vkCmdEndRendering(vk);
+}
+
 error_code vk_command_buffer::end()
 {
-    if (FAILED(vkEndCommandBuffer(vk)))
+    if (LEGACY_FAILED(vkEndCommandBuffer(vk)))
         return error(error_code::command_record, "Failed to end command buffer recording");
     return error_code::success;
 }
@@ -140,7 +153,12 @@ error_code vk_command_buffer::submit(vk_weak_ptr<VkQueue> queue, vk_weak_ptr<VkF
         .commandBufferInfoCount = 1,
         .pCommandBufferInfos = &cmd_buffer_submit_info,
     };
-    if (FAILED(vkQueueSubmit2(queue, 1, &submit_info, fence)))
+    return submit(queue, submit_info, fence);
+}
+
+error_code vk_command_buffer::submit(vk_weak_ptr<VkQueue> queue, const VkSubmitInfo2& info, vk_weak_ptr<VkFence> fence)
+{
+    if (LEGACY_FAILED(vkQueueSubmit2(queue, 1, &info, fence)))
         return error(error_code::render_submit, "Failed to submit command buffer");
     return error_code::success;
 }

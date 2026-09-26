@@ -5,6 +5,8 @@
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
+#include <string>
+
 namespace ve
 {
 struct vk_shader_module : public vk_unique_ptr<VkShaderModule>
@@ -13,17 +15,25 @@ struct vk_shader_module : public vk_unique_ptr<VkShaderModule>
     vk_shader_module(vk_shader_module&& other) = default;
     vk_shader_module& operator=(vk_shader_module&&) = default;
 
-    error_code init(const byte_span&);
+    error_code init(const std::string&);
     using vk_unique_ptr<VkShaderModule>::destroy;
 };
 
 struct vk_pipeline : vk_unique_ptr<VkPipeline>
 {
     VEER_DECLARE_NO_COPY(vk_pipeline);
-    vk_pipeline(vk_pipeline&&) = default;
-    vk_pipeline& operator=(vk_pipeline&&) = default;
+    vk_pipeline(vk_pipeline&& other) :
+        vk_unique_ptr<VkPipeline>(std::move(other)),
+        layout(std::move(other.layout)) {}
 
-    error_code init(const byte_span&);
+    vk_pipeline& operator=(vk_pipeline&& other)
+    {
+        vk_unique_ptr<VkPipeline>::operator=(std::move(other));
+        layout = std::move(other.layout);
+        return *this;
+    }
+
+    error_code init(const std::string&);
     error_code init(const vk_shader_module&);
     
     void destroy()

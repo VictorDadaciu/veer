@@ -140,10 +140,10 @@ error_code vk_instance::init()
         instance_create_info.pNext = &debug_create_info;
     }
 
-    if (FAILED(vkCreateInstance(&instance_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateInstance(&instance_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to initialize Vulkan instance");
 
-    if (enable_validation_layers && FAILED(create_debug_utils_messenger()))
+    if (enable_validation_layers && LEGACY_FAILED(create_debug_utils_messenger()))
     {
         enable_validation_layers = false;
         error("Failed to create validation layer messenger");
@@ -173,11 +173,11 @@ error_code vk_physical_device::init(VkPhysicalDevice physical_device)
 error_code vk_context::select_gpu()
 {
     uint32_t device_count{0};
-    if (FAILED(vkEnumeratePhysicalDevices(vk_context::get().instance, &device_count, nullptr)))
+    if (LEGACY_FAILED(vkEnumeratePhysicalDevices(vk_context::get().instance, &device_count, nullptr)))
         return error(error_code::initialization, "Failed to enumerate pyhysical devices");
     std::vector<VkPhysicalDevice> devices(device_count);
     gpus.resize(device_count);
-    if (FAILED(vkEnumeratePhysicalDevices(vk_context::get().instance, &device_count, devices.data())))
+    if (LEGACY_FAILED(vkEnumeratePhysicalDevices(vk_context::get().instance, &device_count, devices.data())))
         return error(error_code::initialization, "Failed to enumerate pyhysical devices");
 
     for (size_t i = 0; i < device_count; ++i)
@@ -230,7 +230,7 @@ error_code vk_device::init()
         .ppEnabledExtensionNames = device_extensions.data(),
     };
 
-    if (FAILED(vkCreateDevice(gpu, &device_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateDevice(gpu, &device_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create logical device");
 
     vkGetDeviceQueue(vk, queue.family, 0, queue.write());
@@ -249,7 +249,7 @@ error_code vk_queue::init()
     for (size_t i = 0; i < queue_families.size(); ++i)
     {
         if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT &&
-            !FAILED(SDL_Vulkan_GetPresentationSupport(vk_context::get().instance, vk_context::get().gpu(), i)))
+            !LEGACY_FAILED(SDL_Vulkan_GetPresentationSupport(vk_context::get().instance, vk_context::get().gpu(), i)))
         {
             family = i;
             found = true;
@@ -278,7 +278,7 @@ error_code vk_allocator::init()
         .instance = vk_context::get().instance
     };
 
-    if (FAILED(vmaCreateAllocator(&allocator_create_info, &vk)))
+    if (LEGACY_FAILED(vmaCreateAllocator(&allocator_create_info, &vk)))
         return error(error_code::initialization, "Failed to initialize VMA allocator");
 
     return error_code::success;
@@ -303,7 +303,7 @@ error_code vk_descriptor_set_layout::init()
         .bindingCount = 1,
         .pBindings = &desc_layout_binding_tex
     };
-    if (FAILED(vkCreateDescriptorSetLayout(vk_context::get().device, &desc_layout_tex_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateDescriptorSetLayout(vk_context::get().device, &desc_layout_tex_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create descriptor set layout");
 
     return error_code::success;
@@ -321,7 +321,7 @@ error_code vk_descriptor_pool::init(size_t max_sets)
         .poolSizeCount = 1,
         .pPoolSizes = &pool_size
     };
-    if (FAILED(vkCreateDescriptorPool(vk_context::get().device, &desc_pool_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateDescriptorPool(vk_context::get().device, &desc_pool_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create descriptor pool");
 
     return error_code::success;
@@ -343,7 +343,7 @@ std::expected<vk_weak_ptr<VkDescriptorSet>, error_code> vk_descriptor_pool::allo
         .pSetLayouts = layout.read()
     };
     vk_weak_ptr<VkDescriptorSet> ret{};
-    if (FAILED(vkAllocateDescriptorSets(vk_context::get().device, &tex_desc_set_alloc, ret.write())))
+    if (LEGACY_FAILED(vkAllocateDescriptorSets(vk_context::get().device, &tex_desc_set_alloc, ret.write())))
         return std::unexpected(error(error_code::allocation, "Failed to allocate descriptor set"));
     return ret;
 }
@@ -364,7 +364,7 @@ std::expected<std::vector<vk_weak_ptr<VkDescriptorSet>>, error_code> vk_descript
         .pSetLayouts = layout.read()
     };
     std::vector<vk_weak_ptr<VkDescriptorSet>> ret(n);
-    if (FAILED(vkAllocateDescriptorSets(vk_context::get().device, &tex_desc_set_alloc, reinterpret_cast<VkDescriptorSet*>(ret.data()))))
+    if (LEGACY_FAILED(vkAllocateDescriptorSets(vk_context::get().device, &tex_desc_set_alloc, reinterpret_cast<VkDescriptorSet*>(ret.data()))))
         return std::unexpected(error(error_code::allocation, "Failed to allocate descriptor sets"));
     return ret;
 }

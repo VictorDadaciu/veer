@@ -2,6 +2,7 @@
 
 #include "vk_utils.h"
 
+#include <cassert>
 #include <type_traits>
 #include <utility>
 
@@ -59,11 +60,19 @@ public:
     vk_unique_ptr(vk_res ptr=nullptr) noexcept : vk_weak_ptr<vk_res>(ptr) {}
     vk_unique_ptr(const vk_weak_ptr<vk_res>& other) = delete;
     vk_unique_ptr(vk_weak_ptr<vk_res>&& other) noexcept : vk_weak_ptr<vk_res>(std::move(other)) {}
+    vk_unique_ptr(vk_unique_ptr<vk_res>&& other) noexcept : vk_weak_ptr<vk_res>(std::move(other)) {}
 
     vk_unique_ptr& operator=(vk_res ptr) = delete;
     vk_unique_ptr& operator=(const vk_weak_ptr<vk_res>& other) = delete;
+    vk_unique_ptr& operator=(const vk_unique_ptr<vk_res>& other) = delete;
 
     vk_unique_ptr& operator=(vk_weak_ptr<vk_res>&& other) noexcept
+    {
+        vk_weak_ptr<vk_res>::operator=(std::move(other));
+        return *this;
+    }
+
+    vk_unique_ptr& operator=(vk_unique_ptr<vk_res>&& other) noexcept
     {
         vk_weak_ptr<vk_res>::operator=(std::move(other));
         return *this;
@@ -76,7 +85,7 @@ public:
         this->vk = nullptr;
     }
 
-    ~vk_unique_ptr() { if (this->vk) destroy(); }
+    ~vk_unique_ptr() { destroy(); }
 };
 
 template<typename vk_res>
@@ -84,7 +93,10 @@ template<typename vk_res>
 class vk_allocated_ptr : public vk_weak_ptr<vk_res>
 {
 public:
-    vk_allocated_ptr(vk_res ptr=nullptr, VmaAllocation_T* allocation=nullptr) noexcept : vk_weak_ptr<vk_res>(ptr), alloc(allocation) {}
+    vk_allocated_ptr(vk_res ptr=nullptr, VmaAllocation_T* allocation=nullptr) noexcept : vk_weak_ptr<vk_res>(ptr), alloc(allocation)
+    {
+        if (ptr) assert(allocation);
+    }
     vk_allocated_ptr(const vk_weak_ptr<vk_res>& other) = delete;
     vk_allocated_ptr(vk_weak_ptr<vk_res>&& other) = delete;
     vk_allocated_ptr(vk_allocated_ptr<vk_res>&& other) noexcept : vk_weak_ptr<vk_res>(std::move(other)), alloc(std::move(other.alloc)) {}
@@ -111,7 +123,7 @@ public:
         alloc = nullptr;
     }
 
-    ~vk_allocated_ptr() { if (this->vk) destroy(); }
+    ~vk_allocated_ptr() { destroy(); }
 
 protected:
     vk_weak_ptr<VmaAllocation_T*> alloc{};

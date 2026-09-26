@@ -12,7 +12,7 @@ error_code vk_fence::init(bool signaled)
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : 0u
     };
-    if (FAILED(vkCreateFence(vk_context::get().device, &fence_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateFence(vk_context::get().device, &fence_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create fence");
     return error_code::success;
 }
@@ -43,7 +43,7 @@ error_code vk_semaphore::init()
     VkSemaphoreCreateInfo semaphore_create_info{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
     };
-    if (FAILED(vkCreateSemaphore(vk_context::get().device, &semaphore_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateSemaphore(vk_context::get().device, &semaphore_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create semaphore");
     return error_code::success;
 }

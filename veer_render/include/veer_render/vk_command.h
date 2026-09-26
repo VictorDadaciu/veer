@@ -11,7 +11,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include <expected>
+#include <type_traits>
 #include <vector>
 
 namespace ve
@@ -19,20 +19,38 @@ namespace ve
 struct vk_command_buffer : public vk_weak_ptr<VkCommandBuffer>
 {
     error_code reset();
+
     error_code begin(bool=true);
-    void begin_render(const VkRenderingInfo&);
-    void set_viewport_and_scissor(const VkViewport&, const VkRect2D&);
-    void bind_pipeline(const vk_unique_ptr<VkPipeline>&);
-    void bind_texture(const texture&, const vk_unique_ptr<VkPipelineLayout>&);
-    void draw_mesh(const mesh&, size_t=1);
-    error_code end();
+
     error_code submit(vk_weak_ptr<VkQueue>, vk_weak_ptr<VkFence> = nullptr);
+    error_code submit(vk_weak_ptr<VkQueue>, const VkSubmitInfo2&, vk_weak_ptr<VkFence> = nullptr);
 
     void copy_buffer(const vk_buffer&, const vk_buffer&, size_t);
     void copy_buffer(const vk_buffer& source, const vk_buffer& target) { copy_buffer(source, target, target.size); }
 
     void pipeline_barrier(const VkDependencyInfo&);
     void copy_buffer_to_image(const VkCopyBufferToImageInfo2&);
+
+    void begin_render(const VkRenderingInfo&);
+    void set_viewport_and_scissor(const VkViewport&, const VkRect2D&);
+
+    void bind_pipeline(const vk_weak_ptr<VkPipeline>);
+    void bind_texture(const texture&, const vk_weak_ptr<VkPipelineLayout>);
+
+    error_code push_constants(const vk_weak_ptr<VkPipelineLayout>, VkShaderStageFlags, const void*, size_t, size_t=0zu);
+
+    template<typename data_t>
+        requires (!std::is_same_v<data_t, void>)
+    void push_constants(const vk_weak_ptr<VkPipelineLayout> layout, VkShaderStageFlags stages, const data_t* data)
+    {
+        push_constants(layout, stages, data, sizeof(data_t));
+    }
+
+    void draw_mesh(const mesh&, size_t=1);
+
+    void end_render();
+
+    error_code end();
 
     using parent_type = vk_weak_ptr<VkCommandBuffer>;
     using parent_type::parent_type;

@@ -58,7 +58,7 @@ error_code gltf_model_wrapper::allocate_and_copy(ve::mesh& new_mesh)
     VmaAllocationCreateInfo buffer_alloc_create_info{
         .usage = VMA_MEMORY_USAGE_AUTO
     };
-    if (FAILED(vmaCreateBuffer(vk_context::get().allocator, &buffer_create_info, &buffer_alloc_create_info, new_mesh.write(), new_mesh.allocation().write(), nullptr)))
+    if (LEGACY_FAILED(vmaCreateBuffer(vk_context::get().allocator, &buffer_create_info, &buffer_alloc_create_info, new_mesh.write(), new_mesh.allocation().write(), nullptr)))
         return error(error_code::allocation, "Failed to allocate mesh buffer");
 
     auto& staging = staging_buffer::get();

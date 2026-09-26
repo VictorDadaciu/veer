@@ -21,5 +21,5 @@ std::string filename(const std::string&) noexcept;
 std::string extension(const std::string&) noexcept;
 
 [[nodiscard]]
-std::expected<byte_span, error_code> read_entire_file(const std::string&) noexcept;
+std::expected<std::string, error_code> read_entire_file(const std::string&) noexcept;
 }

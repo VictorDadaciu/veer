@@ -3,6 +3,7 @@
 #include "staging_buffer.h"
 #include "shader.h"
 #include "vk_context.h"
+#include "window.h"
 
 #include "internal/asset_manager.h"
 
@@ -25,8 +26,7 @@ error_code init()
 
 std::expected<vk_command_buffer, error_code> begin_draw(window& win)
 {
-    vk_context& ctx = vk_context::get();
-    vk_frame_context& frame = ctx.current_frame();
+    vk_frame_context& frame = vk_context::get().current_frame();
 
     frame.render_start_fence.wait(1000);
     frame.render_start_fence.reset();
@@ -35,7 +35,6 @@ std::expected<vk_command_buffer, error_code> begin_draw(window& win)
     auto& cb = frame.command_buffer;
     SAFE_CALL_RETURN_EXPECTED(cb.reset());
     SAFE_CALL_RETURN_EXPECTED(cb.begin());
-    // TODO: this could all go in window
     {
         const VkImageMemoryBarrier2 barriers[]{
             {
@@ -84,7 +83,7 @@ std::expected<vk_command_buffer, error_code> begin_draw(window& win)
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             .clearValue{
-                .color{0.12f, 0.12f, 0.12f, 1.f}
+                .color{0.02f, 0.02f, 0.02f, 1.f}
             }
         };
         VkRenderingAttachmentInfo depth_attachment_info{
@@ -129,9 +128,72 @@ std::expected<vk_command_buffer, error_code> begin_draw(window& win)
     return cb;
 }
 
-error_code end_draw(vk_command_buffer& cb)
+error_code end_draw(window& win, vk_command_buffer& cb)
 {
+    cb.end_render();
+
+    const auto& link = win.swapchain.current_link();
+    VkImageMemoryBarrier2 barrier_present{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstAccessMask = 0,
+        .oldLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
+        .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+        .image = link.image,
+        .subresourceRange{
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .levelCount = 1,
+            .layerCount = 1
+        }
+    };
+    VkDependencyInfo barrier_present_dependency_info{
+        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &barrier_present
+    };
+    cb.pipeline_barrier(barrier_present_dependency_info);
+
     SAFE_CALL(cb.end());
+
+    const auto& ctx = vk_context::get();
+    const auto& frame = ctx.current_frame();
+    VkSemaphoreSubmitInfo wait_info{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = frame.image_acquired_semaphore,
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+    VkSemaphoreSubmitInfo signal_info{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO,
+        .semaphore = link.render_complete_semaphore,
+        .stageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT
+    };
+    VkCommandBufferSubmitInfo command_info{
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = cb
+    };
+    VkSubmitInfo2 submit_info{
+        .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .waitSemaphoreInfoCount = 1,
+        .pWaitSemaphoreInfos = &wait_info,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &command_info,
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &signal_info,
+    };
+    SAFE_CALL(cb.submit(ctx.queue, submit_info, frame.render_start_fence));
+
+    VkPresentInfoKHR present_info{
+        .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+        .waitSemaphoreCount = 1,
+        .pWaitSemaphores = link.render_complete_semaphore.read(),
+        .swapchainCount = 1,
+        .pSwapchains = win.swapchain.read(),
+        .pImageIndices = &win.swapchain.current_image_index
+    };
+    if (LEGACY_FAILED(vkQueuePresentKHR(ctx.queue, &present_info)))
+        return error(error_code::render_submit, "Failed to present swapchain");
     return error_code::success;
 }
 

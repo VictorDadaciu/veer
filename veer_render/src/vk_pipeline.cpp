@@ -12,20 +12,20 @@
 
 namespace ve
 {
-error_code vk_shader_module::init(const byte_span& code)
+error_code vk_shader_module::init(const std::string& code)
 {
     VkShaderModuleCreateInfo shader_module_create_info{
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .codeSize = static_cast<uint32_t>(code.size),
-        .pCode = reinterpret_cast<const uint32_t*>(code.data)
+        .codeSize = static_cast<uint32_t>(code.size()),
+        .pCode = reinterpret_cast<const uint32_t*>(code.c_str())
     };
-    if (FAILED(vkCreateShaderModule(vk_context::get().device, &shader_module_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateShaderModule(vk_context::get().device, &shader_module_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create vulkan shader module");
 
     return error_code::success;
 }
 
-error_code vk_pipeline::init(const byte_span& code)
+error_code vk_pipeline::init(const std::string& code)
 {
     vk_shader_module SAFE_INIT(module, code);
     return init(module);
@@ -46,7 +46,7 @@ error_code vk_pipeline::init(const vk_shader_module& module)
         .pPushConstantRanges = &push_constant_range
     };
     
-    if (FAILED(vkCreatePipelineLayout(vk_context::get().device, &pipeline_layout_create_info, nullptr, layout.write())))
+    if (LEGACY_FAILED(vkCreatePipelineLayout(vk_context::get().device, &pipeline_layout_create_info, nullptr, layout.write())))
         return error(error_code::initialization, "Failed to initialize pipeline layout");
 
     const VkVertexInputBindingDescription bindings[] = {
@@ -174,7 +174,7 @@ error_code vk_pipeline::init(const vk_shader_module& module)
         .pDynamicState = &dynamic_state,
         .layout = layout
     };
-    if (FAILED(vkCreateGraphicsPipelines(vk_context::get().device, VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &vk)))
+    if (LEGACY_FAILED(vkCreateGraphicsPipelines(vk_context::get().device, VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create graphics pipeline");
     return error_code::success;
 }

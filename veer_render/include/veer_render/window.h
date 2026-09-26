@@ -49,6 +49,8 @@ public:
             return 0.f;
         return static_cast<float>(w) / static_cast<float>(h);
     }
+
+    error_code present(const vk_weak_ptr<VkQueue>&);
     
     vk_surface surface{};
     vk_swapchain swapchain{};

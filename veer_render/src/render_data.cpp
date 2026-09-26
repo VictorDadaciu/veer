@@ -23,7 +23,7 @@ error_code render_data::init()
         .usage = VMA_MEMORY_USAGE_AUTO
     };
     VmaAllocationInfo alloc_info{};
-    if (FAILED(vmaCreateBuffer(vk_context::get().allocator,&buffer_create_info, &buffer_alloc_create_info, ubo.write(), ubo.allocation().write(), &alloc_info)))
+    if (LEGACY_FAILED(vmaCreateBuffer(vk_context::get().allocator,&buffer_create_info, &buffer_alloc_create_info, ubo.write(), ubo.allocation().write(), &alloc_info)))
         return error(error_code::allocation, "Failed to reallocate staging buffer");
     ubo.mapped = reinterpret_cast<std::byte*>(alloc_info.pMappedData);
 

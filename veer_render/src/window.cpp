@@ -14,7 +14,7 @@ namespace ve
 error_code vk_surface::init(const window* win)
 {
     if (!SDL_Vulkan_CreateSurface(*win, vk_context::get().instance, nullptr, &vk) ||
-        FAILED(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_context::get().gpu(), vk, &capabilities)))
+        LEGACY_FAILED(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_context::get().gpu(), vk, &capabilities)))
         return error(error_code::initialization, "Failed to create render surface");
 
     return error_code::success;

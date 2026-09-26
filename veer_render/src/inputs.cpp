@@ -11,8 +11,7 @@ namespace ve::inputs
 using namespace ve;
 void process()
 {
-    SDL_Delay(500);
-    trace("Processing events");
+    SDL_Delay(16);
     auto& input = input_manager::get();
     SDL_Event e;
     while (SDL_PollEvent(&e))
@@ -23,6 +22,12 @@ void process()
                 trace("Quit requested");
                 input.quit = true;
                 break;
+            case SDL_EVENT_KEY_DOWN:
+                input.pressing = true;
+                break;
+            case SDL_EVENT_KEY_UP:
+                input.pressing = false;
+                break;
             default:
                 break;
         }
@@ -32,5 +37,10 @@ void process()
 bool quit_requested() noexcept
 {
     return input_manager::get().quit;
+}
+
+bool pressing() noexcept
+{
+    return input_manager::get().pressing;
 }
 }

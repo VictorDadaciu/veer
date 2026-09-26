@@ -11,6 +11,7 @@ struct input_manager
     ~input_manager() = default;
 
     bool quit{};
+    bool pressing{};
 
     _VEER_SINGLETON(input_manager);
 };

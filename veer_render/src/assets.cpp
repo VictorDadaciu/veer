@@ -65,7 +65,7 @@ asset_load_return_t asset_manager::load_ktx2_file(const std::string& path)
         SAFE_CALL_RETURN_EXPECTED(tex.load(path));
 
         ve::texture& new_tex = textures.emplace_back();
-        if (tex.initialize_texture(new_tex) != error_code::success)
+        if (failed(tex.initialize_texture(new_tex)))
         {
             unload_back(textures, 1);
             return std::unexpected(error(error_code::file_read, "Failed to read texture file \"{}\"", path));
@@ -94,7 +94,7 @@ asset_load_return_t asset_manager::load_gltf_file(const std::string& path)
         for (size_t i = 0; i < model.meshes_count; ++i)
         {
             ve::mesh& new_mesh = meshes.emplace_back();
-            if (model.initialize_mesh(new_mesh, i) != error_code::success)
+            if (failed(model.initialize_mesh(new_mesh, i)))
             {
                 unload_back(meshes, i);
                 return std::unexpected(error(error_code::file_read, "Failed to read mesh file \"{}\"", path));

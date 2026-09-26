@@ -72,17 +72,16 @@ std::string extension(const std::string& path) noexcept
     return std::filesystem::path(path).extension();
 }
 
-std::expected<byte_span, error_code> read_entire_file(const std::string& path) noexcept
+std::expected<std::string, error_code> read_entire_file(const std::string& path) noexcept
 {
     SAFE_CALL_RETURN_EXPECTED(check_file_boilerplate(path));
-    byte_span ret{};
     std::ifstream f(path, std::ios::ate | std::ios::binary);
     if (!f.is_open())
-        return std::unexpected(error(error_code::file_read, "Failed to read file \"{}\"", path));
-
-    ret.size = static_cast<size_t>(f.tellg());
+    return std::unexpected(error(error_code::file_read, "Failed to read file \"{}\"", path));
+    
+    std::string ret(f.tellg(), '\0');
     f.seekg(0);
-    f.read(const_cast<char*>(reinterpret_cast<const char*>(ret.data)), ret.size);
+    f.read(&ret[0], ret.size());
     f.close();
     return ret;
 }
