@@ -61,7 +61,7 @@ error_code vk_swapchain::init(const window* win)
         .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
         .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-        .presentMode = VK_PRESENT_MODE_FIFO_KHR
+        .presentMode = VK_PRESENT_MODE_MAILBOX_KHR // TODO: handle vsync-ey stuff
     };
 
     if (LEGACY_FAILED(vkCreateSwapchainKHR(vk_context::get().device, &swapchain_create_info, nullptr, &vk)))
@@ -71,6 +71,7 @@ error_code vk_swapchain::init(const window* win)
         uint32_t image_count{0};
         if (LEGACY_FAILED(vkGetSwapchainImagesKHR(vk_context::get().device, vk, &image_count, nullptr)))
             return error(error_code::initialization, "Failed to get swapchain images");
+        trace("Swapchain created with {} images", image_count);
         std::vector<VkImage> images(image_count);
         if (LEGACY_FAILED(vkGetSwapchainImagesKHR(vk_context::get().device, vk, &image_count, images.data())))
             return error(error_code::initialization, "Failed to get swapchain images");

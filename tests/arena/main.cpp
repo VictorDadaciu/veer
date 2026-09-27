@@ -6,6 +6,8 @@
 #include <veer_render/mesh.h>
 #include <veer_render/graphics.h>
 #include <veer_render/shader.h>
+#include <veer_render/texture.h>
+#include <veer_render/timing.h>
 #include <veer_render/vk_context.h>
 #include <veer_render/window.h>
 
@@ -166,6 +168,8 @@ void run_gfx()
         auto& mesh = ve::assets::mesh(row.cell<mesh_i>());
         auto& tex = ve::assets::texture(row.cell<tex_i>());
 
+        size_t frames{};
+        auto start_time = ve::time::now();
         while (true) // TODO: handle loop better
         {
             ve::inputs::process();
@@ -175,17 +179,15 @@ void run_gfx()
             auto& frame = ctx.current_frame();
             static float angle = 0.f;
             if (ve::inputs::pressing())
-                angle += glm::radians(2.f);
+                angle += glm::radians(90.f) * ve::time::dt();
             frame.data.data.view = glm::rotate(glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f)), angle, glm::vec3(0.f, 1.f, 0.f));
 
-            static float time = 0.f;
-            time += 0.016;
             db::iterate<SELECT(position3), FROM(objects)>
             (
                 [&frame](const auto& e, auto& pos)
                 {
                     size_t i = static_cast<size_t>(e);
-                    pos.y = std::sin(time + i);
+                    pos.y = std::sin(ve::time::seconds(ve::time::now()) + i);
                     frame.data.data.model[i] = glm::rotate(glm::translate(glm::mat4(1), pos), glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
                 }
             );
@@ -207,8 +209,11 @@ void run_gfx()
                 break;
             }
 
-            ctx.advance_frame();
+            ve::gfx::advance_frame();
+            ++frames;
         }
+        ve::trace("# frames: {}", frames);
+        ve::trace("Avg. frame time: {}", ve::time::duration(start_time, ve::time::now()) / frames);
         win.close();
         ve::gfx::destroy();
     }

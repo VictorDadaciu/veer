@@ -1,8 +1,8 @@
 #include "log.h"
 
-#include <chrono>
+#include "timing.h"
+
 #include <cassert>
-#include <chrono>
 #include <condition_variable>
 #include <iomanip>
 #include <ios>
@@ -13,11 +13,9 @@
 #include <string>
 #include <thread>
 
-#define VEER_TO_SECONDS(x) std::chrono::duration<float, std::chrono::seconds::period>(x).count()
-
 namespace ve::log
 {
-using clock = std::chrono::steady_clock;
+using namespace ve;
 
 static std::string log_level_as_string(level l)
 {
@@ -40,7 +38,7 @@ static std::string log_level_as_string(level l)
 
 struct message
 {
-    clock::time_point time_point{};
+    time_point point{};
     std::string msg{};
     level l{};
 };
@@ -51,7 +49,7 @@ public:
     logger(std::ostream& ostream, const std::string& app_name, level l) :
         output(ostream), name(app_name), base_level(l)
     {
-        beginning = clock::now();
+        beginning = time::now();
         thread = std::thread(
             [this]() -> void
             {
@@ -76,7 +74,7 @@ public:
                     }
 
                     output << "[" << std::fixed << std::setprecision(6)
-                           << VEER_TO_SECONDS(msg.time_point - beginning)
+                           << time::duration(beginning, msg.point)
                            << "] " << name << " " << log_level_as_string(msg.l) << msg.msg << "\n";
                 }
             });
@@ -99,7 +97,7 @@ public:
     std::thread thread{};
     std::mutex mutex{};
     std::condition_variable cv{};
-    clock::time_point beginning{};
+    time_point beginning{};
 
     bool stop{};
 };
@@ -129,7 +127,7 @@ static void _log(level l, const std::string& msg)
         return;
     {
         std::unique_lock<std::mutex> lock(_logger->mutex);
-        _logger->queue.push(message{.time_point = clock::now(), .msg = msg, .l = l});
+        _logger->queue.push(message{.point = time::now(), .msg = msg, .l = l});
     }
     _logger->cv.notify_one();
 }

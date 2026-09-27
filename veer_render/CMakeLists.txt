@@ -9,6 +9,7 @@ set(VEER_RENDER_SOURCES
     src/shader.cpp
     src/staging_buffer.cpp
     src/texture.cpp
+    src/timing.cpp
     src/vk_command.cpp
     src/vk_context.cpp
     src/vk_pipeline.cpp
@@ -29,6 +30,7 @@ set(VEER_RENDER_HEADERS
     include/veer_render/shader.h
     include/veer_render/staging_buffer.h
     include/veer_render/texture.h
+    include/veer_render/timing.h
     include/veer_render/vk_buffer.h
     include/veer_render/vk_command.h
     include/veer_render/vk_context.h
@@ -41,6 +43,7 @@ set(VEER_RENDER_HEADERS
     include/veer_render/window.h
 
     include/internal/asset_manager.h
+    include/internal/game_clock.h
     include/internal/gltf.h
     include/internal/input_manager.h
     include/internal/ktx2.h

@@ -11,7 +11,7 @@ namespace ve::inputs
 using namespace ve;
 void process()
 {
-    SDL_Delay(16);
+    // SDL_Delay(16);
     auto& input = input_manager::get();
     SDL_Event e;
     while (SDL_PollEvent(&e))

@@ -16,5 +16,6 @@ namespace ve::gfx
 [[nodiscard]] error_code init();
 [[nodiscard]] std::expected<vk_command_buffer, error_code> begin_draw(window&);
 [[nodiscard]] error_code end_draw(window&, vk_command_buffer&);
+void advance_frame() noexcept;
 void destroy();
 }

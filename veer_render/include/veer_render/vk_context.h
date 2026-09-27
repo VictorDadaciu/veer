@@ -90,8 +90,6 @@ struct vk_context
     vk_physical_device& gpu() noexcept { assert(gpu_index < gpus.size()); return gpus[gpu_index]; }
     const vk_physical_device& gpu() const noexcept { assert(gpu_index < gpus.size()); return gpus[gpu_index]; }
 
-    void advance_frame() noexcept { current_frame_index = (current_frame_index + 1) % frames_in_flight; }
-
     vk_frame_context& current_frame() noexcept { return frames[current_frame_index]; }
     const vk_frame_context& current_frame() const noexcept { return frames[current_frame_index]; }
 

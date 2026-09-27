@@ -6,6 +6,7 @@
 #include "window.h"
 
 #include "internal/asset_manager.h"
+#include "internal/game_clock.h"
 
 #include <veer_core/log.h>
 
@@ -195,6 +196,14 @@ error_code end_draw(window& win, vk_command_buffer& cb)
     if (LEGACY_FAILED(vkQueuePresentKHR(ctx.queue, &present_info)))
         return error(error_code::render_submit, "Failed to present swapchain");
     return error_code::success;
+}
+
+void advance_frame() noexcept
+{
+    auto& ctx = vk_context::get();
+    ctx.current_frame_index = (ctx.current_frame_index + 1) % frames_in_flight;
+    auto& gc = game_clock::get();
+    gc.advance_frame();
 }
 
 void destroy()
