@@ -1018,14 +1018,14 @@ public:
 
     template<class table_t>
         requires (is_template_of(^^table_t, ^^table) && is_in_database(^^table_t))
-    inline static size_t push_back(const table_row<table_t>& to_push) noexcept
+    inline static typename table_t::index push_back(const table_row<table_t>& to_push) noexcept
     {
         return std::get<index_of_table(^^table_t)>(m_tables).push_back(to_push);
     }
 
     template<class table_t>
         requires (is_template_of(^^table_t, ^^table) && is_in_database(^^table_t))
-    inline static size_t append(const table_rows<table_t>& to_push) noexcept
+    inline static typename table_t::index append(const table_rows<table_t>& to_push) noexcept
     {
         return std::get<index_of_table(^^table_t)>(m_tables).append(to_push);
     }

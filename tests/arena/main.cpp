@@ -173,17 +173,15 @@ void run_gfx()
         while (true) // TODO: handle loop better
         {
             ve::inputs::process();
-            if (ve::inputs::quit_requested())
+            if (ve::inputs::quit() || ve::inputs::just_pressed(ve::keycode::escape))
                 break;
             
             auto& frame = ctx.current_frame();
             static float angle = 0.f;
-            if (ve::inputs::pressing())
-                angle += glm::radians(90.f) * ve::time::dt();
+            angle += glm::radians(90.f * (ve::inputs::is_pressed(ve::keycode::arrow_left) - ve::inputs::is_pressed(ve::keycode::arrow_right))) * ve::time::dt();
             frame.data.data.view = glm::rotate(glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f)), angle, glm::vec3(0.f, 1.f, 0.f));
 
-            db::iterate<SELECT(position3), FROM(objects)>
-            (
+            db::iterate<SELECT(position3), FROM(objects)>(
                 [&frame](const auto& e, auto& pos)
                 {
                     size_t i = static_cast<size_t>(e);
