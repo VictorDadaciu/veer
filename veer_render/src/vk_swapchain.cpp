@@ -40,12 +40,10 @@ error_code vk_swapchain::init(const window* win)
     extent = win->surface.capabilities.currentExtent;
     if (extent.width == 0xFFFFFFFF)
     {
-        size_t w{}, h{};
-        if (win->size(w, h) == error_code::window)
-            return error(error_code::initialization, "Failed to initialize swapchain");
+        auto win_size = win->size();
         extent = {
-            .width = static_cast<uint32_t>(w),
-            .height = static_cast<uint32_t>(h),
+            .width = static_cast<uint32_t>(win_size.x),
+            .height = static_cast<uint32_t>(win_size.y),
         };
     }
 

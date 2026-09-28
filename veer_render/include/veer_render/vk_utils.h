@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include <vulkan/vulkan.h>
 
 struct SDL_Window;
@@ -7,6 +9,14 @@ struct VmaAllocator_T;
 struct VmaAllocation_T;
 namespace ve::vk
 {
+inline VkExtent2D to_extent_2d(const glm::uvec2& vec) noexcept
+{
+    return VkExtent2D{
+        .width = vec.x,
+        .height = vec.y
+    };
+}
+
 void destroy(VkInstance);
 void destroy(VkDevice);
 void destroy(VmaAllocator_T*);

@@ -178,8 +178,13 @@ void run_gfx()
             
             auto& frame = ctx.current_frame();
             static float angle = 0.f;
-            angle += glm::radians(90.f * (ve::inputs::is_pressed(ve::keycode::arrow_left) - ve::inputs::is_pressed(ve::keycode::arrow_right))) * ve::time::dt();
-            frame.data.data.view = glm::rotate(glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f)), angle, glm::vec3(0.f, 1.f, 0.f));
+            angle += glm::radians(ve::inputs::mouse_rel().x * 0.5f);
+            static float fwd = 0.f;
+            fwd += 4.f * ve::inputs::is_pressed(ve::keycode::space) * ve::time::dt();
+            frame.data.data.view =
+                glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f)) *
+                glm::rotate(glm::mat4(1), angle, glm::vec3(0.f, 1.f, 0.f)) *
+                glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, fwd));
 
             db::iterate<SELECT(position3), FROM(objects)>(
                 [&frame](const auto& e, auto& pos)

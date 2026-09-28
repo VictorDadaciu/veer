@@ -38,14 +38,18 @@ c_string window::title() const
     return SDL_GetWindowTitle(vk);
 }
 
-error_code window::size(size_t& width, size_t& height) const
+glm::uvec2 window::size() const
 {
     int w{}, h{};
+    glm::uvec2 ret{};
     if (!SDL_GetWindowSize(vk, &w, &h))
-        return warn(error_code::window, "SDL_GetWindowSize failed");
-    width = static_cast<size_t>(w);
-    height = static_cast<size_t>(h);
-    return error_code::success;
+    {
+        warn("SDL_GetWindowSize failed");
+        return ret;
+    }
+    ret.x = static_cast<uint32_t>(w);
+    ret.y = static_cast<uint32_t>(h);
+    return ret;
 }
 
 void window::close()

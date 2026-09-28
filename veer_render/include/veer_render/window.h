@@ -6,6 +6,8 @@
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
 
+#include <glm/glm.hpp>
+
 struct SDL_Window;
 namespace ve
 {
@@ -25,32 +27,16 @@ public:
 
     c_string title() const;
 
-    error_code size(size_t& width, size_t& height) const;
-    size_t width() const
-    {
-        size_t w{}, h{};
-        if (size(w, h) == error_code::window)
-            return 0;
-        return w;
-    }
+    glm::uvec2 size() const;
+    size_t width() const { return size().x; }
 
-    size_t height() const
-    {
-        size_t w{}, h{};
-        if (size(w, h) == error_code::window)
-            return 0;
-        return h;
-    }
+    size_t height() const { return size().y; }
 
     float aspect_ratio() const
     {
-        size_t w{}, h{};
-        if (size(w, h) == error_code::window)
-            return 0.f;
-        return static_cast<float>(w) / static_cast<float>(h);
+        auto s = size();
+        return s.y > 0 ? static_cast<float>(s.x) / static_cast<float>(s.y) : 0.f;
     }
-
-    error_code present(const vk_weak_ptr<VkQueue>&);
     
     vk_surface surface{};
     vk_swapchain swapchain{};

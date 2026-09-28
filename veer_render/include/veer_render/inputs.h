@@ -1,7 +1,19 @@
 #pragma once
 
+#include "timing.h"
+
+#include <glm/glm.hpp>
+
 namespace ve
 {
+enum class mouse_button
+{
+    left,
+    right,
+    middle,
+    unknown
+};
+
 enum class keycode
 {
     a = 'a',
@@ -97,8 +109,45 @@ enum class keycode
 namespace ve::inputs
 {
 void process();
+
 [[nodiscard]] bool quit() noexcept;
+
+// key events
 [[nodiscard]] bool just_pressed(ve::keycode) noexcept;
+[[nodiscard]] bool just_double_pressed(ve::keycode) noexcept;
 [[nodiscard]] bool is_pressed(ve::keycode) noexcept;
 [[nodiscard]] bool just_released(ve::keycode) noexcept;
+[[nodiscard]] ve::time_point last_pressed(ve::keycode) noexcept;
+[[nodiscard]] ve::time_point last_released(ve::keycode) noexcept;
+
+[[nodiscard]] float hold_duration(ve::keycode) noexcept;
+void set_hold_duration(ve::keycode, float) noexcept;
+[[nodiscard]] float double_press_duration(ve::keycode) noexcept;
+void set_double_press_duration(ve::keycode, float) noexcept;
+
+// mouse button events
+[[nodiscard]] bool just_pressed(ve::mouse_button) noexcept;
+[[nodiscard]] bool just_double_pressed(ve::mouse_button) noexcept;
+[[nodiscard]] bool is_pressed(ve::mouse_button) noexcept;
+[[nodiscard]] bool just_released(ve::mouse_button) noexcept;
+[[nodiscard]] ve::time_point last_pressed(ve::mouse_button) noexcept;
+[[nodiscard]] ve::time_point last_released(ve::mouse_button) noexcept;
+
+[[nodiscard]] float hold_duration(ve::mouse_button) noexcept;
+void set_hold_duration(ve::mouse_button, float) noexcept;
+[[nodiscard]] float double_press_duration(ve::mouse_button) noexcept;
+void set_double_press_duration(ve::mouse_button, float) noexcept;
+
+// common button events
+[[nodiscard]] inline bool is_holding(auto button) noexcept
+{
+    if (!is_pressed(button))
+        return false;
+    return time::duration(last_pressed(button), time::now()) >= hold_duration(button);
+}
+
+// mouse positions
+[[nodiscard]] const glm::vec2& mouse_rel() noexcept;
+[[nodiscard]] const glm::vec2& mouse_abs() noexcept;
+[[nodiscard]] bool mouse_moved() noexcept;
 }

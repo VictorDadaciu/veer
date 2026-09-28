@@ -3,6 +3,7 @@
 #include "staging_buffer.h"
 #include "shader.h"
 #include "vk_context.h"
+#include "vk_utils.h"
 #include "window.h"
 
 #include "internal/asset_manager.h"
@@ -29,7 +30,7 @@ std::expected<vk_command_buffer, error_code> begin_draw(window& win)
 {
     vk_frame_context& frame = vk_context::get().current_frame();
 
-    frame.render_start_fence.wait(1000);
+    frame.render_start_fence.wait();
     frame.render_start_fence.reset();
 
     auto& link = win.swapchain.acquire_next(frame.image_acquired_semaphore);
@@ -97,13 +98,11 @@ std::expected<vk_command_buffer, error_code> begin_draw(window& win)
                 .depthStencil = {1.f, 0}
             }
         };
+        auto extent = vk::to_extent_2d(win.size());
         VkRenderingInfo rendering_info{
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .renderArea{
-                .extent{
-                    .width = static_cast<uint32_t>(win.width()),
-                    .height = static_cast<uint32_t>(win.height()),
-                }
+                .extent = extent
             },
             .layerCount = 1,
             .colorAttachmentCount = 1,
@@ -113,16 +112,13 @@ std::expected<vk_command_buffer, error_code> begin_draw(window& win)
         cb.begin_render(rendering_info);
 
         VkViewport vp{
-            .width = static_cast<float>(win.width()),
-            .height = static_cast<float>(win.height()),
+            .width = static_cast<float>(extent.width),
+            .height = static_cast<float>(extent.height),
             .minDepth = 0.f,
             .maxDepth = 1.f,
         };
         VkRect2D scissor{
-            .extent{
-                .width = static_cast<uint32_t>(win.width()),
-                .height = static_cast<uint32_t>(win.height()),
-            }
+            .extent = extent
         };
         cb.set_viewport_and_scissor(vp, scissor);
     }
