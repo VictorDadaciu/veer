@@ -175,6 +175,11 @@ void run_gfx()
             ve::inputs::process();
             if (ve::inputs::quit() || ve::inputs::just_pressed(ve::keycode::escape))
                 break;
+
+            if (ve::inputs::just_double_pressed(ve::mouse_button::left))
+                ve::trace("Just double-clicked mouse button left");
+            if (ve::inputs::is_holding(ve::mouse_button::right))
+                ve::trace("Holding right mouse button");
             
             auto& frame = ctx.current_frame();
             static float angle = 0.f;

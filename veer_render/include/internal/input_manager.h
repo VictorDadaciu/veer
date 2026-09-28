@@ -48,6 +48,15 @@ using mouse_buttons = TABLE(
 
 using input_db = database<keys, mouse_buttons>;
 
+template<class table_t>
+inline table_row<table_t> default_row()
+{
+    table_row<table_t> row{};
+    row.template cell<hold_duration_p>() = 0.4f;
+    row.template cell<double_press_duration_p>() = 0.25f;
+    return row;
+}
+
 keycode SDL_keycode_to_veer_keycode(size_t);
 mouse_button SDL_mouse_button_to_veer_mouse_button(size_t);
 
@@ -59,7 +68,7 @@ private:
     {
         auto it = map.find(button);
         if (it == map.end())
-            return map[button] = input_db::push_back(typename table_t::row{});
+            return map[button] = input_db::push_back(default_row<table_t>());
         else
             return it->second;
     }

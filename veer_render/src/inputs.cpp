@@ -17,7 +17,7 @@ void process_button_down_event(auto tag)
     input.set<is_pressed_p>(tag, true);
     input.set<just_pressed_p>(tag, true);
     auto now = time::now();
-    if (time::duration(last_pressed(tag), now) >= double_press_duration(tag))
+    if (time::duration(last_pressed(tag), now) <= double_press_duration(tag))
         input.set<just_double_pressed_p>(tag, true);
     input.set<last_pressed_p>(tag, now);
 }
