@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.21..4.4)
 
 set(VEER_RENDER_SOURCES
     src/assets.cpp
+    src/camera.cpp
     src/graphics.cpp
     src/inputs.cpp
     src/mesh.cpp
@@ -24,6 +25,7 @@ set(VEER_RENDER_SOURCES
 
 set(VEER_RENDER_HEADERS
     include/veer_render/assets.h
+    include/veer_render/camera.h
     include/veer_render/graphics.h
     include/veer_render/mesh.h
     include/veer_render/render_data.h

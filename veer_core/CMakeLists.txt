@@ -12,6 +12,7 @@ set(VEER_CORE_HEADERS
     include/veer_core/error_code.h
     include/veer_core/file.h
     include/veer_core/log.h
+    include/veer_core/math_utils.h
     include/veer_core/meta_utils.h
     include/veer_core/timing.h
     include/veer_core/utils.h

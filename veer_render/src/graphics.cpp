@@ -12,6 +12,7 @@
 #include <veer_core/log.h>
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_mouse.h>
 
 namespace ve::gfx
 {
@@ -19,7 +20,7 @@ error_code init()
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
         return error(error_code::initialization, "Failed to initialize SDL3");
-
+    
     SAFE_JUST_INIT(vk_context::get());
     SAFE_JUST_INIT(asset_manager::get());
     SAFE_JUST_INIT(staging_buffer::get(), 1024);

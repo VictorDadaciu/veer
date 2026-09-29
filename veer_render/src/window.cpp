@@ -26,6 +26,9 @@ error_code window::open(c_string name, size_t width, size_t height)
     vk = SDL_CreateWindow(name, width, height, SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
     if (!vk)
         return error(error_code::initialization, "Failed to create SDL window");
+
+    if (!SDL_SetWindowRelativeMouseMode(vk, true))
+        warn("Failed to capture mouse");
     
     SAFE_JUST_INIT(surface, this);
     SAFE_JUST_INIT(swapchain, this);

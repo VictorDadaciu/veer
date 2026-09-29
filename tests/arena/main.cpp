@@ -1,7 +1,9 @@
-#include <veer_core/log.h>
 #include <veer_core/db.h>
+#include <veer_core/log.h>
+#include <veer_core/math_utils.h>
 
 #include <veer_render/assets.h>
+#include <veer_render/camera.h>
 #include <veer_render/inputs.h>
 #include <veer_render/mesh.h>
 #include <veer_render/graphics.h>
@@ -141,12 +143,29 @@ void initialize_db()
     for (size_t i = 0; i < 3; ++i)
     {
         objects::row row{};
-        row.cell<position3>() = glm::vec3(4.5f * (i - 1.f), 0, 0);
+        row.cell<position3>() = glm::vec3(4.5f * i, 0, 0);
         row.cell<tex_i>() = tex_index;
         row.cell<mesh_i>() = mesh_index;
         row.cell<shader_i>() = shader_index;
         db::push_back<objects>(row);
     }
+}
+
+static void handle_cam(ve::simple_fps_camera& cam)
+{
+    const auto& mouse_rel = ve::inputs::mouse_rel();
+    glm::vec2 swapped(mouse_rel.y, -mouse_rel.x);
+    cam.rotate_by(glm::radians(0.1f * swapped));
+
+    int8_t x = ve::inputs::is_pressed(ve::keycode::d) - ve::inputs::is_pressed(ve::keycode::a);
+    int8_t y = ve::inputs::is_pressed(ve::keycode::space) - ve::inputs::is_pressed(ve::keycode::c);
+    int8_t z = ve::inputs::is_pressed(ve::keycode::w) - ve::inputs::is_pressed(ve::keycode::s);
+    if (!x && !y && !z) return;
+    cam.translate_by(
+        ve::time::dt() *
+        (7.5f + 10.f * ve::inputs::is_pressed(ve::keycode::left_shift)) *
+        glm::normalize(glm::mat3(cam.right(), cam.up(), cam.forward()) * glm::vec3(x, y, z))
+    );
 }
 
 void run_gfx()
@@ -157,11 +176,8 @@ void run_gfx()
         auto _ = win.open("Arena");
         auto& ctx = ve::vk_context::get();
         initialize_db();
-        for (auto& frame : ctx.frames)
-        {
-            frame.data.data.proj = glm::perspective(glm::radians(60.0f), win.aspect_ratio(), 0.1f, 128.0f);
-            frame.data.data.view = glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f));
-        }
+        auto cam = ve::simple_fps_camera(win.aspect_ratio()).translate_to(10.f * ve::math::forward);
+
         // TODO: actually handle correctly
         auto row = db::row<objects>(0);
         auto& pipeline = ve::shader::get(row.cell<shader_i>());
@@ -181,22 +197,18 @@ void run_gfx()
             if (ve::inputs::is_holding(ve::mouse_button::right))
                 ve::trace("Holding right mouse button");
             
+            handle_cam(cam);
+
             auto& frame = ctx.current_frame();
-            static float angle = 0.f;
-            angle += glm::radians(ve::inputs::mouse_rel().x * 0.5f);
-            static float fwd = 0.f;
-            fwd += 4.f * ve::inputs::is_pressed(ve::keycode::space) * ve::time::dt();
-            frame.data.data.view =
-                glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, -10.f)) *
-                glm::rotate(glm::mat4(1), angle, glm::vec3(0.f, 1.f, 0.f)) *
-                glm::translate(glm::mat4(1), glm::vec3(0.f, 0.f, fwd));
+            frame.data.data.view = cam.view();
+            frame.data.data.proj = cam.proj();
 
             db::iterate<SELECT(position3), FROM(objects)>(
                 [&frame](const auto& e, auto& pos)
                 {
                     size_t i = static_cast<size_t>(e);
                     pos.y = std::sin(ve::time::seconds(ve::time::now()) + i);
-                    frame.data.data.model[i] = glm::rotate(glm::translate(glm::mat4(1), pos), glm::radians(90.f), glm::vec3(0.f, 0.f, 1.f));
+                    frame.data.data.model[i] = glm::rotate(glm::translate(glm::mat4(1), pos), glm::radians(90.f), ve::math::forward);
                 }
             );
             frame.commit();

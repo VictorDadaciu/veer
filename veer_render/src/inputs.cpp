@@ -35,6 +35,8 @@ void process_key_down_event(const SDL_KeyboardEvent& e)
     keycode code = SDL_keycode_to_veer_keycode(e.key);
     if (code == keycode::unknown)
         return;
+    if (is_pressed(code))
+        return;
     process_button_down_event(code);
 }
 
@@ -332,6 +334,12 @@ keycode SDL_keycode_to_veer_keycode(size_t code)
         case SDLK_LEFT: return keycode::arrow_left;
         case SDLK_DOWN: return keycode::arrow_down;
         case SDLK_UP: return keycode::arrow_up;
+        case SDLK_LSHIFT: return keycode::left_shift;
+        case SDLK_RSHIFT: return keycode::right_shift;
+        case SDLK_LCTRL: return keycode::left_ctrl;
+        case SDLK_RCTRL: return keycode::right_ctrl;
+        case SDLK_LALT: return keycode::left_alt;
+        case SDLK_RALT: return keycode::right_alt;
         default: return keycode::unknown;
     }
 }
