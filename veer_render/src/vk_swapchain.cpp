@@ -5,8 +5,6 @@
 
 #include <veer_core/log.h>
 
-#include <vk_mem_alloc.h>
-
 #include <cstring>
 
 namespace ve

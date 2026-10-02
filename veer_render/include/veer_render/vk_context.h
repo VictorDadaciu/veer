@@ -45,7 +45,7 @@ struct vk_queue : public vk_weak_ptr<VkQueue>
     uint32_t family{};
 };
 
-struct vk_allocator : public vk_unique_ptr<VmaAllocator_T*>
+struct vk_allocator : public vk_unique_ptr<VmaAllocator>
 {
     error_code init();
 };

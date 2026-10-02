@@ -4,8 +4,6 @@
 
 #include <veer_core/log.h>
 
-#include <vk_mem_alloc.h>
-
 namespace ve
 {
 error_code render_data::init()

@@ -10,8 +10,6 @@
 #include <veer_core/file.h>
 #include <veer_core/log.h>
 
-#include <vk_mem_alloc.h>
-
 namespace ve
 {
 error_code gltf_model_wrapper::load(const std::string& path)

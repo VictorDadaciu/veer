@@ -4,9 +4,9 @@
 
 #include <vulkan/vulkan.h>
 
+#include <vk_mem_alloc.h>
+
 struct SDL_Window;
-struct VmaAllocator_T;
-struct VmaAllocation_T;
 namespace ve::vk
 {
 inline VkExtent2D to_extent_2d(const glm::uvec2& vec) noexcept
@@ -19,7 +19,7 @@ inline VkExtent2D to_extent_2d(const glm::uvec2& vec) noexcept
 
 void destroy(VkInstance);
 void destroy(VkDevice);
-void destroy(VmaAllocator_T*);
+void destroy(VmaAllocator);
 void destroy(VkDescriptorSetLayout);
 void destroy(VkDescriptorPool);
 void destroy(VkImageView);
@@ -30,8 +30,8 @@ void destroy(VkSemaphore);
 void destroy(SDL_Window*);
 void destroy(VkSampler);
 void destroy(VkCommandPool);
-void destroy(VkBuffer, VmaAllocation_T*);
-void destroy(VkImage, VmaAllocation_T*);
+void destroy(VkBuffer, VmaAllocation);
+void destroy(VkImage, VmaAllocation);
 void destroy(VkShaderModule);
 void destroy(VkPipelineLayout);
 void destroy(VkPipeline);

@@ -6,7 +6,6 @@
 #include <type_traits>
 #include <utility>
 
-struct VmaAllocation_T;
 namespace ve
 {
 template<typename vk_res>
@@ -93,7 +92,7 @@ template<typename vk_res>
 class vk_allocated_ptr : public vk_weak_ptr<vk_res>
 {
 public:
-    vk_allocated_ptr(vk_res ptr=nullptr, VmaAllocation_T* allocation=nullptr) noexcept : vk_weak_ptr<vk_res>(ptr), alloc(allocation)
+    vk_allocated_ptr(vk_res ptr=nullptr, VmaAllocation allocation=nullptr) noexcept : vk_weak_ptr<vk_res>(ptr), alloc(allocation)
     {
         if (ptr) assert(allocation);
     }
@@ -112,8 +111,8 @@ public:
         return *this;
     }
 
-    vk_weak_ptr<VmaAllocation_T*>& allocation() noexcept { return alloc; }
-    const vk_weak_ptr<VmaAllocation_T*>& allocation() const noexcept { return alloc; }
+    vk_weak_ptr<VmaAllocation>& allocation() noexcept { return alloc; }
+    const vk_weak_ptr<VmaAllocation>& allocation() const noexcept { return alloc; }
 
     void destroy()
     {
@@ -126,6 +125,6 @@ public:
     ~vk_allocated_ptr() { destroy(); }
 
 protected:
-    vk_weak_ptr<VmaAllocation_T*> alloc{};
+    vk_weak_ptr<VmaAllocation> alloc{};
 };
 }

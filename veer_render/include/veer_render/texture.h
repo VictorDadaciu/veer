@@ -9,7 +9,6 @@
 
 #include <cstdint>
 
-struct VmaAllocation_T;
 namespace ve
 {
 struct texture : public vk_sampled_image

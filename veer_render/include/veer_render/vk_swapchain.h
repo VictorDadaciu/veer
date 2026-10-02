@@ -12,7 +12,6 @@
 #include <cassert>
 #include <vector>
 
-struct VmaAllocation_T;
 namespace ve
 {
 struct vk_swapchain_link
