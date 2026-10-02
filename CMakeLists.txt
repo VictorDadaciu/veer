@@ -47,7 +47,6 @@ target_include_directories(veer
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/veer/extern>
 )
 
-# TODO: expose vma as well, it's just one file..
 option(VEER_INSTALL "Install veer" ${VEER_IS_TOP_LEVEL})
 if (${VEER_INSTALL})
     message("Configuring veer install...")
@@ -66,6 +65,9 @@ if (${VEER_INSTALL})
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/veer/cmake
     )
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/glm/glm
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/veer/extern
+    )
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/extern/vma/include/vk_mem_alloc.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/veer/extern
     )
     export(TARGETS veer ${VEER_COMPONENTS}

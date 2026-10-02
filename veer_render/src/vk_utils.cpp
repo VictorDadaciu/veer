@@ -4,7 +4,7 @@
 
 #include <veer_core/log.h>
 
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>

@@ -6,7 +6,7 @@
 
 #include <veer_core/log.h>
 
-#include <vma/vk_mem_alloc.h>
+#include <vk_mem_alloc.h>
 
 #include <ktx.h>
 #include <ktxvulkan.h>

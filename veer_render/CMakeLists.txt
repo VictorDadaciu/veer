@@ -66,6 +66,7 @@ veer_target_common(veer_render)
 target_include_directories(veer_render
     PRIVATE
         ../extern
+        ../extern/vma/include
 )
 
 target_link_libraries(
@@ -75,7 +76,6 @@ target_link_libraries(
         Vulkan::Vulkan
         slang::slang
     PRIVATE
-        $<BUILD_LOCAL_INTERFACE:VulkanMemoryAllocator>
         $<BUILD_LOCAL_INTERFACE:glm-header-only>
         $<BUILD_LOCAL_INTERFACE:SDL3-static>
         $<BUILD_LOCAL_INTERFACE:ktx>
