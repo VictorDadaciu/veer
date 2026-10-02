@@ -51,11 +51,10 @@ float4 main(VSOutput input)
     float3 N = normalize(input.Normal);
     float3 L = normalize(input.LightVec);
     float3 V = normalize(input.ViewVec);
-    // float3 H = normalize(L + V);
+    float3 H = normalize(L + V);
     float diffuse = saturate(dot(N, L));
-    // float specular = pow(max(dot(H, N), 0.0), 16.0);
+    float specular = float(diffuse > 0.0) * pow(max(dot(N, H), 0.0), 16.0);
     // Sample from texture
     float3 color = textures[NonUniformResourceIndex(input.TexIndex)].Sample(input.UV).rgb;
-    // return float4(diffuse * color + specular + 0.2, 1.0);
-    return float4(diffuse, diffuse, diffuse, 1.0);
+    return float4(diffuse * color + specular + 0.05, 1.0);
 }

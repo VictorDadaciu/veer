@@ -26,7 +26,9 @@ const glm::mat4& simple_fps_camera::proj() const
 
 const glm::mat4& simple_fps_camera::recalculate_proj(float aspect_ratio)
 {
-    return proj_mat = glm::perspective(fov, aspect_ratio, near_plane, far_plane);
+    proj_mat = glm::perspectiveLH(fov, aspect_ratio, near_plane, far_plane);
+    proj_mat[1][1] *= -1.f;
+    return proj_mat;
 }
 
 simple_fps_camera& simple_fps_camera::translate_by(const glm::vec3& offset)
@@ -61,12 +63,12 @@ simple_fps_camera& simple_fps_camera::rotate_to(const glm::vec2& rotation)
 
 glm::vec3 simple_fps_camera::forward() const
 {
-    return -backward();
+    return rot_mat[2];
 }
 
 glm::vec3 simple_fps_camera::backward() const
 {
-    return rot_mat[2];
+    return -forward();
 }
 
 glm::vec3 simple_fps_camera::right() const
@@ -81,11 +83,11 @@ glm::vec3 simple_fps_camera::left() const
 
 glm::vec3 simple_fps_camera::up() const
 {
-    return -down();
+    return rot_mat[1];
 }
 
 glm::vec3 simple_fps_camera::down() const
 {
-    return rot_mat[1];
+    return -up();
 }
 }

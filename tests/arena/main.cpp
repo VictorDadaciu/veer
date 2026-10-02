@@ -136,10 +136,11 @@ uint8_t load_asset(const std::string& path)
 
 void initialize_db()
 {
-    // /home/victordadaciu/workspace/veer/
     auto shader_index = load_shader();
+    // TODO: export with +z forward
     auto tex_index = load_asset("tests/assets/dog.ktx2");
     auto mesh_index = load_asset("tests/assets/box.glb");
+    mesh_index = load_asset("tests/assets/cone.glb");
     for (size_t i = 0; i < 3; ++i)
     {
         objects::row row{};
@@ -154,7 +155,7 @@ void initialize_db()
 static void handle_cam(ve::simple_fps_camera& cam)
 {
     const auto& mouse_rel = ve::inputs::mouse_rel();
-    glm::vec2 swapped(mouse_rel.y, -mouse_rel.x);
+    glm::vec2 swapped(mouse_rel.y, mouse_rel.x);
     cam.rotate_by(glm::radians(0.1f * swapped));
 
     int8_t x = ve::inputs::is_pressed(ve::keycode::d) - ve::inputs::is_pressed(ve::keycode::a);
@@ -175,7 +176,7 @@ void run_gfx()
         ve::window win;
         auto _ = win.open("Arena");
         initialize_db();
-        auto cam = ve::simple_fps_camera(win.aspect_ratio()).translate_to(10.f * ve::math::forward);
+        auto cam = ve::simple_fps_camera(win.aspect_ratio()).translate_to(10.f * ve::math::backward);
 
         // TODO: actually handle correctly
         auto row = db::row<objects>(0);
@@ -208,9 +209,9 @@ void run_gfx()
                 [&frame_data](const auto& e, auto& pos, auto& ti)
                 {
                     size_t i = static_cast<size_t>(e);
-                    pos.y = std::sin(ve::time::seconds(ve::time::now()) + i);
+                    pos.y = std::sin(ve::time::now_in_seconds() + i);
                     auto& model = frame_data.model[i];
-                    model.transform = glm::rotate(glm::translate(glm::mat4(1), pos), glm::radians(90.f), ve::math::forward);
+                    model.transform = glm::rotate(glm::translate(glm::mat4(1), pos), 2.f * glm::radians(ve::time::now_in_seconds()), ve::math::up3);
                     model.tex_index = ti;
                 }
             );

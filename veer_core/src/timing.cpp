@@ -32,4 +32,9 @@ float nanoseconds(const time_point& tp) noexcept
 {
     return std::chrono::duration<float, std::chrono::nanoseconds::period>(tp.time_since_epoch()).count();
 }
+
+float now_in_seconds() noexcept
+{
+    return seconds(now());
+}
 }

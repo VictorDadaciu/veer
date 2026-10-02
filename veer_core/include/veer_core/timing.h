@@ -16,4 +16,5 @@ namespace ve::time
 [[nodiscard]] float milliseconds(const ve::time_point&) noexcept;
 [[nodiscard]] float microseconds(const ve::time_point&) noexcept;
 [[nodiscard]] float nanoseconds(const ve::time_point&) noexcept;
+[[nodiscard]] float now_in_seconds() noexcept;
 }
