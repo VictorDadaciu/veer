@@ -15,8 +15,9 @@ const glm::mat4& simple_fps_camera::view() const
 
 const glm::mat4& simple_fps_camera::recalculate_view()
 {
-    rot_mat = glm::rotate(math::ident4, rot.y, math::up3) * glm::rotate(math::ident4, rot.x, math::right3);
-    return view_mat = glm::inverse(glm::translate(math::ident4, pos) * rot_mat);
+    rot_mat = glm::rotate(ve::constants<glm::mat4>::identity, rot.y, ve::constants<glm::vec3>::up) *
+              glm::rotate(ve::constants<glm::mat4>::identity, rot.x, ve::constants<glm::vec3>::right);
+    return view_mat = glm::inverse(glm::translate(ve::constants<glm::mat4>::identity, pos) * rot_mat);
 }
 
 const glm::mat4& simple_fps_camera::proj() const

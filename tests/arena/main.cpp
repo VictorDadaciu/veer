@@ -154,9 +154,7 @@ void initialize_db()
 
 static void handle_cam(ve::simple_fps_camera& cam)
 {
-    const auto& mouse_rel = ve::inputs::mouse_rel();
-    glm::vec2 swapped(mouse_rel.y, mouse_rel.x);
-    cam.rotate_by(glm::radians(0.1f * swapped));
+    cam.rotate_by(glm::radians(0.1f * ve::math::swapped(ve::inputs::mouse_rel())));
 
     int8_t x = ve::inputs::is_pressed(ve::keycode::d) - ve::inputs::is_pressed(ve::keycode::a);
     int8_t y = ve::inputs::is_pressed(ve::keycode::space) - ve::inputs::is_pressed(ve::keycode::c);
@@ -176,7 +174,7 @@ void run_gfx()
         ve::window win;
         auto _ = win.open("Arena");
         initialize_db();
-        auto cam = ve::simple_fps_camera(win.aspect_ratio()).translate_to(10.f * ve::math::backward);
+        auto cam = ve::simple_fps_camera(win.aspect_ratio()).translate_to(10.f * ve::constants<glm::vec3>::backward);
 
         // TODO: actually handle correctly
         auto row = db::row<objects>(0);
@@ -211,7 +209,7 @@ void run_gfx()
                     size_t i = static_cast<size_t>(e);
                     pos.y = std::sin(ve::time::now_in_seconds() + i);
                     auto& model = frame_data.model[i];
-                    model.transform = glm::rotate(glm::translate(glm::mat4(1), pos), 2.f * glm::radians(ve::time::now_in_seconds()), ve::math::up3);
+                    model.transform = glm::rotate(glm::translate(glm::mat4(1), pos), 2.f * glm::radians(ve::time::now_in_seconds()), ve::constants<glm::vec3>::up);
                     model.tex_index = ti;
                 }
             );

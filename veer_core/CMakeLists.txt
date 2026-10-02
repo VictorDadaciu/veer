@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21..4.4)
 set(VEER_CORE_SOURCES
     src/file.cpp
     src/log.cpp
+    src/math_utils.cpp
     src/timing.cpp
     src/utils.cpp
 )

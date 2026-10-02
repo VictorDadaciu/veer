@@ -4,8 +4,9 @@ I am too lazy right now to right up a document.
 
 The system is very flexible, allowing the same property (component) to be of different types across tables. Elements can be packed tightly or padded to fill a cache line without aliasing. Tables can be iterated on chosen properties easily.
 
-Example found in ./tests/arena.
+Examples found in ./tests/arena.
 
-Can only be built with GCC16 for now since it is the only compiler that currently supports reflection.
+Can only be built with GCC16 for now since it is the only compiler that supports reflection.
 
-cmake -DCMAKE_C_COMPILER=/opt/gcc-16.2/bin/gcc -DCMAKE_CXX_COMPILER=/opt/gcc-16.2/bin/g++ -DSLANG_ENABLE_TESTS=FALSE -DSLANG_ENABLE_EXAMPLES=FALSE -DSLANG_SLANG_LLVM_FLAVOR=DISABLE -DSLANG_USE_SYSTEM_VULKAN_HEADERS=TRUE -DSLANG_USE_SYSTEM_SPIRV_TOOLS=TRUE -DSLANG_USE_SYSTEM_SPIRV_HEADERS=TRUE --preset default
+1. cmake -S . -B build
+2. cmake --build build
