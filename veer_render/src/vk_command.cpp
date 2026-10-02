@@ -98,7 +98,7 @@ error_code vk_command_buffer::push_constants(const vk_weak_ptr<VkPipelineLayout>
     if (size == 0zu)
         return warn(error_code::command_record, "Must specify >0 size when pushing constant");
     vkCmdPushConstants(vk, layout, stages, offset, size, data);
-    return error_code::success;   
+    return error_code::success;
 }
 
 void vk_command_buffer::draw_mesh(const mesh& m, size_t instances)

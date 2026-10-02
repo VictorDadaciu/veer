@@ -120,7 +120,7 @@ void run_db()
 
 uint8_t load_shader()
 {
-    auto res = ve::shader::load("tests/assets/triangle.slang");
+    auto res = ve::shader::load("tests/assets/simple_model.slang");
     if (!res)
         return std::numeric_limits<uint8_t>::max();
     return static_cast<uint8_t>(*res);
@@ -174,14 +174,12 @@ void run_gfx()
     {
         ve::window win;
         auto _ = win.open("Arena");
-        auto& ctx = ve::vk_context::get();
         initialize_db();
         auto cam = ve::simple_fps_camera(win.aspect_ratio()).translate_to(10.f * ve::math::forward);
 
         // TODO: actually handle correctly
         auto row = db::row<objects>(0);
         auto& pipeline = ve::shader::get(row.cell<shader_i>());
-        auto& mesh = ve::assets::mesh(row.cell<mesh_i>());
         auto& tex = ve::assets::texture(row.cell<tex_i>());
 
         size_t frames{};
@@ -199,19 +197,24 @@ void run_gfx()
             
             handle_cam(cam);
 
-            auto& frame = ctx.current_frame();
-            frame.data.data.view = cam.view();
-            frame.data.data.proj = cam.proj();
+            auto& frame_data = pipeline.current_frame();
+            frame_data.globals.resize(1);
+            frame_data.globals[0].view = cam.view();
+            frame_data.globals[0].proj = cam.proj();
+            frame_data.globals.commit();
 
-            db::iterate<SELECT(position3), FROM(objects)>(
-                [&frame](const auto& e, auto& pos)
+            frame_data.model.resize(db::count<objects>());
+            db::iterate<SELECT(position3, tex_i), FROM(objects)>(
+                [&frame_data](const auto& e, auto& pos, auto& ti)
                 {
                     size_t i = static_cast<size_t>(e);
                     pos.y = std::sin(ve::time::seconds(ve::time::now()) + i);
-                    frame.data.data.model[i] = glm::rotate(glm::translate(glm::mat4(1), pos), glm::radians(90.f), ve::math::forward);
+                    auto& model = frame_data.model[i];
+                    model.transform = glm::rotate(glm::translate(glm::mat4(1), pos), glm::radians(90.f), ve::math::forward);
+                    model.tex_index = ti;
                 }
             );
-            frame.commit();
+            frame_data.model.commit();
 
             auto cb = ve::gfx::begin_draw(win);
             if (!cb)
@@ -221,8 +224,16 @@ void run_gfx()
             }
             cb->bind_pipeline(pipeline);
             cb->bind_texture(tex, pipeline.layout);
-            cb->push_constants(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, &frame.data.device_address);
-            cb->draw_mesh(mesh, db::count<objects>());
+            cb->push_constants(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, &frame_data.globals.address);
+            db::iterate<SELECT(position3, mesh_i), FROM(objects)>(
+                [&cb, &frame_data, &pipeline](const auto& e, auto& pos, auto& mi)
+                {
+                    size_t i = static_cast<size_t>(e);
+                    auto address = frame_data.model.address + i * sizeof(ve::model_data);
+                    cb->push_constants(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, &address, sizeof(VkDeviceAddress));
+                    cb->draw_mesh(ve::assets::mesh(mi));
+                }
+            );
             if (ve::failed(ve::gfx::end_draw(win, *cb)))
             {
                 ve::error("Failed to end draw");
@@ -234,6 +245,7 @@ void run_gfx()
         }
         ve::trace("# frames: {}", frames);
         ve::trace("Avg. frame time: {}", ve::time::duration(start_time, ve::time::now()) / frames);
+        ve::trace("Avg. fps: {}", frames / ve::time::duration(start_time, ve::time::now()));
         win.close();
         ve::gfx::destroy();
     }

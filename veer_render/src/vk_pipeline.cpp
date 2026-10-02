@@ -25,17 +25,35 @@ error_code vk_shader_module::init(const std::string& code)
     return error_code::success;
 }
 
+error_code pipeline_frame_data::init()
+{
+    SAFE_JUST_INIT(globals, 1);
+    SAFE_JUST_INIT(model);
+    return error_code::success;
+}
+
+void pipeline_frame_data::destroy()
+{
+    model.destroy();
+    globals.destroy();
+}
+
 error_code vk_pipeline::init(const std::string& code)
 {
     vk_shader_module SAFE_INIT(module, code);
-    return init(module);
+    SAFE_CALL(init(module));
+    for (auto& frame : frames)
+        SAFE_JUST_INIT(frame);
+    return error_code::success;
 }
 
 error_code vk_pipeline::init(const vk_shader_module& module)
 {
-    VkPushConstantRange push_constant_range{
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .size = sizeof(VkDeviceAddress)
+    VkPushConstantRange ranges[] = {
+        {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .size = 2 * sizeof(VkDeviceAddress)
+        }
     };
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info{
@@ -43,7 +61,7 @@ error_code vk_pipeline::init(const vk_shader_module& module)
         .setLayoutCount = 1,
         .pSetLayouts = vk_context::get().layout.read(),
         .pushConstantRangeCount = 1,
-        .pPushConstantRanges = &push_constant_range
+        .pPushConstantRanges = ranges
     };
     
     if (LEGACY_FAILED(vkCreatePipelineLayout(vk_context::get().device, &pipeline_layout_create_info, nullptr, layout.write())))
@@ -177,5 +195,15 @@ error_code vk_pipeline::init(const vk_shader_module& module)
     if (LEGACY_FAILED(vkCreateGraphicsPipelines(vk_context::get().device, VK_NULL_HANDLE, 1, &pipeline_create_info, nullptr, &vk)))
         return error(error_code::initialization, "Failed to create graphics pipeline");
     return error_code::success;
+}
+
+pipeline_frame_data& vk_pipeline::current_frame() noexcept
+{
+    return frames[vk_context::get().current_frame_index];
+}
+
+const pipeline_frame_data& vk_pipeline::current_frame() const noexcept
+{
+    return frames[vk_context::get().current_frame_index];
 }
 }

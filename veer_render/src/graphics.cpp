@@ -198,7 +198,7 @@ error_code end_draw(window& win, vk_command_buffer& cb)
 void advance_frame() noexcept
 {
     auto& ctx = vk_context::get();
-    ctx.current_frame_index = (ctx.current_frame_index + 1) % frames_in_flight;
+    ctx.current_frame_index = (ctx.current_frame_index + 1) % vk::frames_in_flight;
     auto& gc = game_clock::get();
     gc.advance_frame();
 }

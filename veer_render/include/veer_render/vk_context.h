@@ -1,6 +1,5 @@
 #pragma once
 
-#include "render_data.h"
 #include "vk_command.h"
 #include "vk_sync.h"
 #include "vk_ptr.h"
@@ -9,15 +8,14 @@
 
 #include <vulkan/vulkan.h>
 
+#include <vma/vk_mem_alloc.h>
+
 #include <array>
 #include <cassert>
 #include <unordered_map>
 
-struct VmaAllocator_T;
 namespace ve
 {
-static constexpr uint8_t frames_in_flight = 2;
-
 struct vk_instance : public vk_unique_ptr<VkInstance>
 {
     error_code init();
@@ -70,9 +68,6 @@ struct vk_frame_context
     error_code init();
     void destroy();
 
-    void commit();
-
-    render_data data{};
     vk_command_pool pool{};
     // TODO: command buffers will need to be somewhere else, but will do for now
     vk_command_buffer command_buffer{};
@@ -106,7 +101,7 @@ struct vk_context
     vk_allocator allocator{};
     vk_descriptor_set_layout layout{};
     vk_descriptor_pool desc_pool{};
-    std::array<vk_frame_context, frames_in_flight> frames{};
+    std::array<vk_frame_context, vk::frames_in_flight> frames{};
     uint8_t gpu_index{};
     uint8_t current_frame_index{};
 

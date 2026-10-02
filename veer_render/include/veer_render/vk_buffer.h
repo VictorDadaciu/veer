@@ -9,7 +9,6 @@
 
 #include <cstddef>
 
-class VmaAllocation_T;
 namespace ve
 {
 struct vk_buffer : public vk_allocated_ptr<VkBuffer>

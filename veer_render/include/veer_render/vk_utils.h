@@ -9,6 +9,8 @@
 struct SDL_Window;
 namespace ve::vk
 {
+static constexpr uint8_t frames_in_flight = 2;
+
 inline VkExtent2D to_extent_2d(const glm::uvec2& vec) noexcept
 {
     return VkExtent2D{

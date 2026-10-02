@@ -3,7 +3,6 @@
 #include "mesh.h"
 #include "texture.h"
 #include "vk_sync.h"
-#include "vk_pipeline.h"
 #include "vk_ptr.h"
 
 #include <veer_core/error_code.h>
@@ -41,9 +40,9 @@ struct vk_command_buffer : public vk_weak_ptr<VkCommandBuffer>
 
     template<typename data_t>
         requires (!std::is_same_v<data_t, void>)
-    void push_constants(const vk_weak_ptr<VkPipelineLayout> layout, VkShaderStageFlags stages, const data_t* data)
+    void push_constants(const vk_weak_ptr<VkPipelineLayout> layout, VkShaderStageFlags stages, const data_t* data, size_t offset=0zu)
     {
-        push_constants(layout, stages, data, sizeof(data_t));
+        push_constants(layout, stages, data, sizeof(data_t), offset);
     }
 
     void draw_mesh(const mesh&, size_t=1);

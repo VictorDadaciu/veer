@@ -6,7 +6,6 @@ set(VEER_RENDER_SOURCES
     src/graphics.cpp
     src/inputs.cpp
     src/mesh.cpp
-    src/render_data.cpp
     src/shader.cpp
     src/staging_buffer.cpp
     src/texture.cpp
@@ -28,11 +27,11 @@ set(VEER_RENDER_HEADERS
     include/veer_render/camera.h
     include/veer_render/graphics.h
     include/veer_render/mesh.h
-    include/veer_render/render_data.h
     include/veer_render/shader.h
     include/veer_render/staging_buffer.h
     include/veer_render/texture.h
     include/veer_render/timing.h
+    include/veer_render/uniform_buffer.h
     include/veer_render/vk_buffer.h
     include/veer_render/vk_command.h
     include/veer_render/vk_context.h
