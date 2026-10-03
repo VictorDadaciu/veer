@@ -10,7 +10,6 @@
 #include <veer_render/shader.h>
 #include <veer_render/texture.h>
 #include <veer_render/timing.h>
-#include <veer_render/vk_context.h>
 #include <veer_render/window.h>
 
 #include <glm/glm.hpp>
@@ -136,18 +135,27 @@ uint8_t load_asset(const std::string& path)
 
 void initialize_db()
 {
-    auto shader_index = load_shader();
+    load_shader();
     // TODO: export with +z forward
-    auto tex_index = load_asset("tests/assets/dog.ktx2");
-    auto mesh_index = load_asset("tests/assets/box.glb");
-    mesh_index = load_asset("tests/assets/cone.glb");
+    load_asset("tests/assets/dog.ktx2");
+    load_asset("tests/assets/box.glb");
+    load_asset("tests/assets/cone.glb");
+    for (int i = 0; i < 3; ++i)
+    {
+        objects::row row{};
+        row.cell<position3>() = glm::vec3(4.5f * (i - 3), 0, 0);
+        row.cell<tex_i>() = 0;
+        row.cell<mesh_i>() = 0;
+        row.cell<shader_i>() = 0;
+        db::push_back<objects>(row);
+    }
     for (size_t i = 0; i < 3; ++i)
     {
         objects::row row{};
         row.cell<position3>() = glm::vec3(4.5f * i, 0, 0);
-        row.cell<tex_i>() = tex_index;
-        row.cell<mesh_i>() = mesh_index;
-        row.cell<shader_i>() = shader_index;
+        row.cell<tex_i>() = 0;
+        row.cell<mesh_i>() = 1;
+        row.cell<shader_i>() = 0;
         db::push_back<objects>(row);
     }
 }
@@ -167,6 +175,22 @@ static void handle_cam(ve::simple_fps_camera& cam)
     );
 }
 
+static void handle_objects(ve::pipeline_frame_data& frame_data)
+{
+    frame_data.model.resize(db::count<objects>());
+    db::iterate<SELECT(position3, tex_i), FROM(objects)>(
+        [&frame_data](const auto& e, auto& pos, auto& ti)
+        {
+            size_t i = static_cast<size_t>(e);
+            pos.y = std::sin(ve::time::now_in_seconds() + i);
+            auto& model = frame_data.model[i];
+            model.transform = glm::rotate(glm::translate(glm::mat4(1), pos), 0.25f * ve::time::now_in_seconds(), ve::constants<glm::vec3>::up);
+            model.tex_index = ti;
+        }
+    );
+    frame_data.model.commit();
+}
+
 void run_gfx()
 {
     if (!ve::failed(ve::gfx::init()))
@@ -177,9 +201,8 @@ void run_gfx()
         auto cam = ve::simple_fps_camera(win.aspect_ratio()).translate_to(10.f * ve::constants<glm::vec3>::backward);
 
         // TODO: actually handle correctly
-        auto row = db::row<objects>(0);
-        auto& pipeline = ve::shader::get(row.cell<shader_i>());
-        auto& tex = ve::assets::texture(row.cell<tex_i>());
+        auto& pipeline = ve::shader::get(0);
+        auto& tex = ve::assets::texture(0);
 
         size_t frames{};
         auto start_time = ve::time::now();
@@ -194,26 +217,13 @@ void run_gfx()
             if (ve::inputs::is_holding(ve::mouse_button::right))
                 ve::trace("Holding right mouse button");
             
-            handle_cam(cam);
-
             auto& frame_data = pipeline.current_frame();
+            handle_cam(cam);
             frame_data.globals.resize(1);
             frame_data.globals[0].view = cam.view();
             frame_data.globals[0].proj = cam.proj();
             frame_data.globals.commit();
-
-            frame_data.model.resize(db::count<objects>());
-            db::iterate<SELECT(position3, tex_i), FROM(objects)>(
-                [&frame_data](const auto& e, auto& pos, auto& ti)
-                {
-                    size_t i = static_cast<size_t>(e);
-                    pos.y = std::sin(ve::time::now_in_seconds() + i);
-                    auto& model = frame_data.model[i];
-                    model.transform = glm::rotate(glm::translate(glm::mat4(1), pos), 2.f * glm::radians(ve::time::now_in_seconds()), ve::constants<glm::vec3>::up);
-                    model.tex_index = ti;
-                }
-            );
-            frame_data.model.commit();
+            handle_objects(frame_data);
 
             auto cb = ve::gfx::begin_draw(win);
             if (!cb)
@@ -223,6 +233,7 @@ void run_gfx()
             }
             cb->bind_pipeline(pipeline);
             cb->bind_texture(tex, pipeline.layout);
+
             cb->push_constants(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, &frame_data.globals.address);
             db::iterate<SELECT(position3, mesh_i), FROM(objects)>(
                 [&cb, &frame_data, &pipeline](const auto& e, auto& pos, auto& mi)
