@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.21..4.4)
 
 find_package(veer PATHS ~/.local)
-
 if (${VEER_FOUND})
     project(arena)
 

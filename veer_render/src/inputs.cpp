@@ -2,32 +2,47 @@
 
 #include "internal/input_manager.h"
 
+#include <veer_core/bits.h>
 #include <veer_core/log.h>
 
 #include <SDL3/SDL.h>
+
+#include <cassert>
 
 namespace
 {
 using namespace ve;
 using namespace ve::inputs;
 
-void process_button_down_event(auto tag)
+row_index<buttons> key_index(keycode code)
 {
-    auto& input = input_manager::get();
-    input.set<is_pressed_p>(tag, true);
-    input.set<just_pressed_p>(tag, true);
-    auto now = time::now();
-    if (time::duration(last_pressed(tag), now) <= double_press_duration(tag))
-        input.set<just_double_pressed_p>(tag, true);
-    input.set<last_pressed_p>(tag, now);
+    assert(code != keycode::unknown);
+    return input_manager::get().get_or_insert_in_keycode_map(code);
 }
 
-void process_button_up_event(auto tag)
+row_index<buttons> mouse_button_index(mouse_button button)
 {
-    auto& input = input_manager::get();
-    input.set<is_pressed_p>(tag, false);
-    input.set<just_released_p>(tag, true);
-    input.set<last_released_p>(tag, time::now());
+    assert(button != mouse_button::unknown);
+    return buttons::index(static_cast<size_t>(button));
+}
+
+void process_button_down_event(row_index<buttons> i)
+{
+    uint8_t& state_flags = input_db::cell<button_state_flags_p>(i);
+    state_flags = bits::set(state_flags, e_is_pressed);
+    state_flags = bits::set(state_flags, e_just_pressed);
+    auto now = time::now();
+    if (time::duration(input_db::cell<last_pressed_p>(i), now) <= input_db::cell<double_press_duration_p>(i))
+        state_flags = bits::set(state_flags, e_just_double_pressed);
+    input_db::cell<last_pressed_p>(i) = now;
+}
+
+void process_button_up_event(row_index<buttons> i)
+{
+    uint8_t& state_flags = input_db::cell<button_state_flags_p>(i);
+    state_flags = bits::unset(state_flags, e_is_pressed);
+    state_flags = bits::set(state_flags, e_just_released);
+    input_db::cell<last_released_p>(i) = time::now();
 }
 
 void process_key_down_event(const SDL_KeyboardEvent& e)
@@ -37,7 +52,7 @@ void process_key_down_event(const SDL_KeyboardEvent& e)
         return;
     if (is_pressed(code))
         return;
-    process_button_down_event(code);
+    process_button_down_event(key_index(code));
 }
 
 void process_key_up_event(const SDL_KeyboardEvent& e)
@@ -45,7 +60,7 @@ void process_key_up_event(const SDL_KeyboardEvent& e)
     keycode code = SDL_keycode_to_veer_keycode(e.key);
     if (code == keycode::unknown)
         return;
-    process_button_up_event(code);
+    process_button_up_event(key_index(code));
 }
 
 void process_mouse_button_down_event(const SDL_MouseButtonEvent& e)
@@ -53,7 +68,7 @@ void process_mouse_button_down_event(const SDL_MouseButtonEvent& e)
     mouse_button button = SDL_mouse_button_to_veer_mouse_button(e.button);
     if (button == mouse_button::unknown)
         return;
-    process_button_down_event(button);
+    process_button_down_event(mouse_button_index(button));
 }
 
 void process_mouse_button_up_event(const SDL_MouseButtonEvent& e)
@@ -61,7 +76,7 @@ void process_mouse_button_up_event(const SDL_MouseButtonEvent& e)
     mouse_button button = SDL_mouse_button_to_veer_mouse_button(e.button);
     if (button == mouse_button::unknown)
         return;
-    process_button_up_event(button);
+    process_button_up_event(mouse_button_index(button));
 }
 
 void process_mouse_motion_event(const SDL_MouseMotionEvent& e)
@@ -73,10 +88,11 @@ void process_mouse_motion_event(const SDL_MouseMotionEvent& e)
 
 void clear_temp_events()
 {
-    input_db::iterate<SELECT(just_pressed_p, just_released_p, just_double_pressed_p), FROM()>(
-        [](const auto&, auto& jp, auto& jr, auto& jdp)
+    input_db::iterate<SELECT(button_state_flags_p), FROM()>(
+        [](const auto&, auto& flags)
         {
-            jp = jr = jdp = false;
+            constexpr static uint8_t reset_flags = ~bits::mask<uint8_t>(e_is_pressed);
+            flags &= reset_flags;
         }
     );
     input_manager::get().mouse_rel = glm::vec2();
@@ -128,102 +144,102 @@ bool quit() noexcept
 
 bool just_pressed(keycode code) noexcept
 {
-    return input_manager::get().get<just_pressed_p>(code);
+    return bits::get(input_db::cell<button_state_flags_p>(key_index(code)), e_just_pressed);
 }
 
 bool just_double_pressed(keycode code) noexcept
 {
-    return input_manager::get().get<just_double_pressed_p>(code);
+    return bits::get(input_db::cell<button_state_flags_p>(key_index(code)), e_just_double_pressed);
 }
 
 bool is_pressed(keycode code) noexcept
 {
-    return input_manager::get().get<is_pressed_p>(code);
+    return bits::get(input_db::cell<button_state_flags_p>(key_index(code)), e_is_pressed);
 }
 
 bool just_released(keycode code) noexcept
 {
-    return input_manager::get().get<just_released_p>(code);
+    return bits::get(input_db::cell<button_state_flags_p>(key_index(code)), e_just_released);
 }
 
 time_point last_pressed(keycode code) noexcept
 {
-    return input_manager::get().get<last_pressed_p>(code);
+    return input_db::cell<last_pressed_p>(key_index(code));
 }
 
 time_point last_released(keycode code) noexcept
 {
-    return input_manager::get().get<last_released_p>(code);
+    return input_db::cell<last_released_p>(key_index(code));
 }
 
 float hold_duration(keycode code) noexcept
 {
-    return input_manager::get().get<hold_duration_p>(code);
+    return input_db::cell<hold_duration_p>(key_index(code));
 }
 
 void set_hold_duration(keycode code, float duration) noexcept
 {
-    input_manager::get().set<hold_duration_p>(code, std::max(duration, 0.f));
+    input_db::cell<hold_duration_p>(key_index(code)) = std::max(duration, 0.f);
 }
 
 float double_press_duration(keycode code) noexcept
 {
-    return input_manager::get().get<double_press_duration_p>(code);
+    return input_db::cell<double_press_duration_p>(key_index(code));
 }
 
 void set_double_press_duration(keycode code, float duration) noexcept
 {
-    input_manager::get().set<double_press_duration_p>(code, std::max(duration, 0.f));
+    input_db::cell<double_press_duration_p>(key_index(code)) = std::max(duration, 0.f);
 }
 
 bool just_pressed(mouse_button button) noexcept
 {
-    return input_manager::get().get<just_pressed_p>(button);
+    return bits::get(input_db::cell<button_state_flags_p>(mouse_button_index(button)), e_just_pressed);
 }
 
 bool just_double_pressed(mouse_button button) noexcept
 {
-    return input_manager::get().get<just_double_pressed_p>(button);
+    return bits::get(input_db::cell<button_state_flags_p>(mouse_button_index(button)), e_just_double_pressed);
 }
 
 bool is_pressed(mouse_button button) noexcept
 {
-    return input_manager::get().get<is_pressed_p>(button);
+    return bits::get(input_db::cell<button_state_flags_p>(mouse_button_index(button)), e_is_pressed);
 }
 
 bool just_released(mouse_button button) noexcept
 {
-    return input_manager::get().get<just_released_p>(button);
+    return bits::get(input_db::cell<button_state_flags_p>(mouse_button_index(button)), e_just_released);
 }
 
 time_point last_pressed(mouse_button button) noexcept
 {
-    return input_manager::get().get<last_pressed_p>(button);
+    return input_db::cell<last_pressed_p>(mouse_button_index(button));
 }
 
 time_point last_released(mouse_button button) noexcept
 {
-    return input_manager::get().get<last_released_p>(button);
+    return input_db::cell<last_released_p>(mouse_button_index(button));
 }
 
 float hold_duration(mouse_button button) noexcept
 {
-    return input_manager::get().get<hold_duration_p>(button);
+    return input_db::cell<hold_duration_p>(mouse_button_index(button));
 }
 
 void set_hold_duration(mouse_button button, float duration) noexcept
 {
-    input_manager::get().set<hold_duration_p>(button, std::max(duration, 0.f));
+    input_db::cell<hold_duration_p>(mouse_button_index(button)) = std::max(duration, 0.f);
 }
 
 float double_press_duration(mouse_button button) noexcept
 {
-    return input_manager::get().get<double_press_duration_p>(button);
+    return input_db::cell<double_press_duration_p>(mouse_button_index(button));
 }
 
 void set_double_press_duration(mouse_button button, float duration) noexcept
 {
-    input_manager::get().set<double_press_duration_p>(button, std::max(duration, 0.f));
+    input_db::cell<double_press_duration_p>(mouse_button_index(button)) = std::max(duration, 0.f);
 }
 
 const glm::vec2& mouse_rel() noexcept
@@ -238,12 +254,30 @@ const glm::vec2& mouse_abs() noexcept
 
 bool mouse_moved() noexcept
 {
-    return input_manager::get().mouse_rel != glm::vec2(); // TODO: fuzzy equa;s
+    return input_manager::get().mouse_rel != glm::vec2(); // TODO: fuzzy equals
 }
 }
 
 namespace ve
 {
+error_code input_manager::init()
+{
+    // for mouse buttons
+    input_db::push_back(default_button_row());
+    input_db::push_back(default_button_row());
+    input_db::push_back(default_button_row());
+    return error_code::success;
+}
+
+row_index<buttons> input_manager::get_or_insert_in_keycode_map(keycode code)
+{
+    auto it = keycode_map.find(code);
+    if (it == keycode_map.end())
+        return keycode_map[code] = input_db::push_back(default_button_row());
+    else
+        return it->second;
+}
+
 mouse_button SDL_mouse_button_to_veer_mouse_button(size_t code)
 {
     switch (code)

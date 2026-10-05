@@ -9,6 +9,7 @@ set(VEER_CORE_SOURCES
 )
 
 set(VEER_CORE_HEADERS
+    include/veer_core/bits.h
     include/veer_core/db.h
     include/veer_core/error_code.h
     include/veer_core/file.h

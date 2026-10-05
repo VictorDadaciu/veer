@@ -14,3 +14,6 @@
 [submodule "extern/ktx"]
 	path = extern/ktx
 	url = https://github.com/KhronosGroup/KTX-Software.git
+[submodule "extern/cppunit"]
+	path = extern/cppunit
+	url = https://github.com/cppunit/cppunit

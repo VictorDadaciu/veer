@@ -8,6 +8,7 @@
 
 #include "internal/asset_manager.h"
 #include "internal/game_clock.h"
+#include "internal/input_manager.h"
 
 #include <veer_core/log.h>
 
@@ -24,6 +25,7 @@ error_code init()
     SAFE_JUST_INIT(vk_context::get());
     SAFE_JUST_INIT(asset_manager::get());
     SAFE_JUST_INIT(staging_buffer::get(), 1024);
+    SAFE_JUST_INIT(input_manager::get());
     return error_code::success;
 }
 
