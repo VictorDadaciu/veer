@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <memory>
 
 namespace ve
@@ -22,6 +23,21 @@ constexpr size_t next_power_of_2(size_t x)
     x |= x >> 16;
     x |= x >> 32;
     return ++x;
+}
+
+template<int exponent, std::floating_point underlying_t=float>
+struct tolerance_t
+{
+    static constexpr underlying_t value = std::pow(static_cast<underlying_t>(10), static_cast<underlying_t>(exponent));
+};
+template<int exponent, std::floating_point underlying_t=float>
+static constexpr underlying_t tolerance = tolerance_t<exponent, underlying_t>::value;
+
+
+template<std::floating_point f1_t, std::floating_point f2_t, std::floating_point bigger_t = std::conditional_t<(sizeof(f1_t) >= sizeof(f2_t)), f1_t, f2_t>>
+inline constexpr bool fuzzy_eq(f1_t a, f2_t b, bigger_t tol = tolerance<-6, bigger_t>)
+{
+    return std::abs(a - b) <= tol;
 }
 
 struct alignas(cache_line_size) cache_aligned_bytes

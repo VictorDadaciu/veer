@@ -3,9 +3,8 @@
 #include <veer_core/bits.h>
 
 #include <cstddef>
-#include <memory>
 
-struct test_bits : public Cppunit
+struct bits_tests : public Cppunit
 {
     void test_get()
     {
@@ -68,10 +67,5 @@ struct test_bits : public Cppunit
         test_set();
         test_unset();
         test_mask();
-    }
-
-    static void run_all()
-    {
-        test_bits().run();
     }
 };

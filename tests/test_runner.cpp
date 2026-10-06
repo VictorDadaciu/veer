@@ -1,7 +1,11 @@
-#include "unit/test_bits.cpp"
+#include "unit/bits_tests.cpp"
+#include "unit/db_tests.cpp"
+#include "unit/utils_tests.cpp"
 
 int main()
 {
-    test_bits::run_all();
+    db_tests().run();
+    bits_tests().run();
+    utils_tests().run();
     return 0;
 }

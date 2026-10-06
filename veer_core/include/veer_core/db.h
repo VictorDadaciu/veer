@@ -391,6 +391,8 @@ public:
     using row    = table_row<table>;
     using rows   = table_rows<table>;
 
+    inline static row default_row{};
+
 private:
     static consteval size_t flat_property_index(std::meta::info candidate_r, std::vector<size_t> exclude={})
     {
@@ -817,7 +819,7 @@ public:
             std::copy_n(std::get<i>(other.m_views), other.m_count, std::get<i>(m_views) + at);
     }
     
-    size_t push_back(const table_t::row& row)
+    size_t push_back(const table_t::row& row=table_t::default_row)
     {
         size_t ret = m_count++;
         if (m_count > m_capacity)
