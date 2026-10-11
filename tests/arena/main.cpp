@@ -104,11 +104,11 @@ void run_db()
     db::iterate<SELECT(health), FROM()>([](const auto& i, auto& hp)
     {
         hp -= 5 + static_cast<PARAM_TYPE(hp)>(i);
-        IF_DECLTYPE_IS(i, ve::row_index<defenders>)
+        IF_DECLTYPE_IS(i, defenders::index)
         {
             ve::info("defender: {}", hp);
         }
-        ELSE_IF_DECLTYPE_IS(i, ve::row_index<attackers>)
+        ELSE_IF_DECLTYPE_IS(i, attackers::index)
         {
             ve::info("attacker: {}", hp);
         }
@@ -147,7 +147,7 @@ void initialize_db()
         row.cell<tex_i>() = 0;
         row.cell<mesh_i>() = 0;
         row.cell<shader_i>() = 0;
-        db::push_back<objects>(row);
+        db::push_back(row);
     }
     for (size_t i = 0; i < 3; ++i)
     {
@@ -156,7 +156,7 @@ void initialize_db()
         row.cell<tex_i>() = 0;
         row.cell<mesh_i>() = 1;
         row.cell<shader_i>() = 0;
-        db::push_back<objects>(row);
+        db::push_back(row);
     }
 }
 

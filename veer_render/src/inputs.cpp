@@ -14,19 +14,19 @@ namespace
 using namespace ve;
 using namespace ve::inputs;
 
-row_index<buttons> key_index(keycode code)
+buttons::index key_index(keycode code)
 {
     assert(code != keycode::unknown);
     return input_manager::get().get_or_insert_in_keycode_map(code);
 }
 
-row_index<buttons> mouse_button_index(mouse_button button)
+buttons::index mouse_button_index(mouse_button button)
 {
     assert(button != mouse_button::unknown);
     return buttons::index(static_cast<size_t>(button));
 }
 
-void process_button_down_event(row_index<buttons> i)
+void process_button_down_event(buttons::index i)
 {
     uint8_t& state_flags = input_db::cell<button_state_flags_p>(i);
     state_flags = bits::set(state_flags, e_is_pressed);
@@ -37,7 +37,7 @@ void process_button_down_event(row_index<buttons> i)
     input_db::cell<last_pressed_p>(i) = now;
 }
 
-void process_button_up_event(row_index<buttons> i)
+void process_button_up_event(buttons::index i)
 {
     uint8_t& state_flags = input_db::cell<button_state_flags_p>(i);
     state_flags = bits::unset(state_flags, e_is_pressed);
@@ -263,17 +263,23 @@ namespace ve
 error_code input_manager::init()
 {
     // for mouse buttons
-    input_db::push_back(default_button_row());
-    input_db::push_back(default_button_row());
-    input_db::push_back(default_button_row());
+    {
+        buttons::row row{};
+        row.cell<hold_duration_p>() = 0.4f;
+        row.cell<double_press_duration_p>() = 0.25f;
+        buttons::default_row = row;
+    }
+    input_db::push_back<buttons>();
+    input_db::push_back<buttons>();
+    input_db::push_back<buttons>();
     return error_code::success;
 }
 
-row_index<buttons> input_manager::get_or_insert_in_keycode_map(keycode code)
+buttons::index input_manager::get_or_insert_in_keycode_map(keycode code)
 {
     auto it = keycode_map.find(code);
     if (it == keycode_map.end())
-        return keycode_map[code] = input_db::push_back(default_button_row());
+        return keycode_map[code] = input_db::push_back<buttons>();
     else
         return it->second;
 }

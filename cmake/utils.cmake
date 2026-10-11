@@ -13,6 +13,7 @@ function(veer_compile_options TARGET)
         -Wall
         -fno-omit-frame-pointer
         -static-libasan
+        -fdiagnostics-all-candidates
     )
 endfunction()
 

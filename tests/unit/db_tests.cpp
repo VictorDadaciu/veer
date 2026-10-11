@@ -4,6 +4,7 @@
 #include <veer_core/utils.h>
 
 #include <cstdlib>
+#include <print>
 #include <type_traits>
 
 DERIVE_PROP(bool_p, PROPERTY_ROOT(bool));
@@ -28,149 +29,131 @@ struct db_tests : public Cppunit
         CHECK(row.cell<int_p>(), 0);
         row.cell<int_p>() = 25;
         CHECK(row.cell<int_p>(), 25);
-        row.set_cell<int_p>(-25);
+        row.set<int_p>(-25);
         CHECK(row.cell<int_p>(), -25);
 
         CHECKT(ve::fuzzy_eq(row.cell<float_p>(), 0.f));
         row.cell<float_p>() = 25.f;
         CHECKT(ve::fuzzy_eq(row.cell<float_p>(), 25.f));
-        row.set_cell<float_p>(-25.f);
+        row.set<float_p>(-25.f);
         CHECKT(ve::fuzzy_eq(row.cell<float_p>(), -25.f));
     }
 
-    void test_rows_constructor()
+    void test_sheet_constructor()
     {
-        table1::rows rows1{};
-        CHECK(rows1.count(), 0zu);
-        CHECK(rows1.capacity(), 1zu);
-        table1::rows rows2 = std::move(rows1);
-        CHECK(rows2.count(), 0zu);
-        CHECK(rows2.capacity(), 1zu);
-        table1::rows rows3(10);
-        CHECK(rows3.count(), 0zu);
-        CHECK(rows3.capacity(), 10zu);
+        table1::sheet sheet1{};
+        CHECK(sheet1.count(), 0zu);
+        CHECK(sheet1.capacity(), 1zu);
+        table1::sheet sheet2 = std::move(sheet1);
+        CHECK(sheet2.count(), 0zu);
+        CHECK(sheet2.capacity(), 1zu);
+        table1::sheet sheet3(10);
+        CHECK(sheet3.count(), 0zu);
+        CHECK(sheet3.capacity(), 10zu);
     }
 
-    void test_rows_push_back()
+    void test_sheet_push_back()
     {
         table1::default_row = table1::row();
-        table1::rows rows{};
+        table1::sheet sheet{};
         for (size_t i = 0; i < 5; ++i)
         {
-            CHECK(rows.push_back(), i);
+            CHECK(sheet.push_back(), i);
             size_t count = i + 1;
-            CHECK(rows.count(), count);
-            CHECK(rows.capacity(), ve::next_power_of_2(count));
-            CHECKT(!rows.cell<bool_p>(i));
-            CHECK(rows.cell<int_p>(i), 0);
-            CHECKT(ve::fuzzy_eq(rows.cell<float_p>(i), 0.f));
-            {
-                table1::row row = rows[i];
-                CHECKT(!row.cell<bool_p>());
-                CHECK(row.cell<int_p>(), 0);
-                CHECKT(ve::fuzzy_eq(row.cell<float_p>(), 0.f));
-            }
+            CHECK(sheet.count(), count);
+            CHECK(sheet.capacity(), ve::next_power_of_2(count));
+            CHECKT(!sheet.cell<bool_p>(i));
+            CHECK(sheet.cell<int_p>(i), 0);
+            CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), 0.f));
         }
         {
             table1::row row{};
-            row.set_cell<bool_p>(true);
-            row.set_cell<int_p>(10);
-            row.set_cell<float_p>(100.f);
+            row.set<bool_p>(true);
+            row.set<int_p>(10);
+            row.set<float_p>(100.f);
             table1::default_row = row;
         }
         for (size_t i = 5; i < 10; ++i)
         {
-            CHECK(rows.push_back(), i);
+            CHECK(sheet.push_back(), i);
             size_t count = i + 1;
-            CHECK(rows.count(), count);
-            CHECK(rows.capacity(), ve::next_power_of_2(count));
-            CHECKT(rows.cell<bool_p>(i));
-            CHECK(rows.cell<int_p>(i), 10);
-            CHECKT(ve::fuzzy_eq(rows.cell<float_p>(i), 100.f));
-            {
-                table1::row row = rows[i];
-                CHECKT(row.cell<bool_p>());
-                CHECK(row.cell<int_p>(), 10);
-                CHECKT(ve::fuzzy_eq(row.cell<float_p>(), 100.f));
-            }
+            CHECK(sheet.count(), count);
+            CHECK(sheet.capacity(), ve::next_power_of_2(count));
+            CHECKT(sheet.cell<bool_p>(i));
+            CHECK(sheet.cell<int_p>(i), 10);
+            CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), 100.f));
         }
         for (size_t i = 10; i < 15; ++i)
         {
             {
                 table1::row row{};
-                row.set_cell<bool_p>(i % 2);
-                row.set_cell<int_p>(i);
-                row.set_cell<float_p>(i);
-                CHECK(rows.push_back(row), i);
+                row.set<bool_p>(i % 2);
+                row.set<int_p>(i);
+                row.set<float_p>(i);
+                CHECK(sheet.push_back(row), i);
             }
             size_t count = i + 1;
-            CHECK(rows.count(), count);
-            CHECK(rows.capacity(), ve::next_power_of_2(count));
-            CHECK(rows.cell<bool_p>(i), i % 2);
-            CHECK(rows.cell<int_p>(i), i);
-            CHECKT(ve::fuzzy_eq(rows.cell<float_p>(i), static_cast<float>(i)));
-            {    
-                table1::row row = rows[i];
-                CHECK(row.cell<bool_p>(), i % 2);
-                CHECK(row.cell<int_p>(), i);
-                CHECKT(ve::fuzzy_eq(row.cell<float_p>(), static_cast<float>(i)));
-            }
+            CHECK(sheet.count(), count);
+            CHECK(sheet.capacity(), ve::next_power_of_2(count));
+            CHECK(sheet.cell<bool_p>(i), i % 2);
+            CHECK(sheet.cell<int_p>(i), i);
+            CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), static_cast<float>(i)));
         }
     }
 
-    void test_rows_append()
+    void test_sheet_append()
     {
         table1::default_row = table1::row();
-        table1::rows rows{};
+        table1::sheet sheet{};
         for (size_t i = 0; i < 10; ++i)
         {
-            CHECK(rows.push_back(), i);
-            CHECKT(!rows.cell<bool_p>(i));
+            CHECK(sheet.push_back(), i);
+            CHECKT(!sheet.cell<bool_p>(i));
         }
-        CHECK(rows.count(), 10);
-        CHECK(rows.capacity(), 16);
+        CHECK(sheet.count(), 10);
+        CHECK(sheet.capacity(), 16);
         {
             {
                 table1::row row{};
-                row.set_cell<bool_p>(true);
+                row.set<bool_p>(true);
                 table1::default_row = row;
             }
-            table1::rows new_rows(3);
-            for (size_t i = 0; i < new_rows.capacity(); ++i)
+            table1::sheet new_sheet(3);
+            for (size_t i = 0; i < new_sheet.capacity(); ++i)
             {
-                CHECK(new_rows.push_back(), i);
-                CHECKT(new_rows.cell<bool_p>(i));
+                CHECK(new_sheet.push_back(), i);
+                CHECKT(new_sheet.cell<bool_p>(i));
             }
-            CHECK(rows.append(new_rows), 10);
+            CHECK(sheet.append(new_sheet), 10);
         }
-        CHECK(rows.count(), 13);
-        CHECK(rows.capacity(), 16);
+        CHECK(sheet.count(), 13);
+        CHECK(sheet.capacity(), 16);
         {
             {
                 table1::row row{};
-                row.set_cell<bool_p>(true);
+                row.set<bool_p>(true);
                 table1::default_row = row;
             }
-            table1::rows new_rows(5);
-            for (size_t i = 0; i < new_rows.capacity(); ++i)
+            table1::sheet new_sheet(5);
+            for (size_t i = 0; i < new_sheet.capacity(); ++i)
             {
-                CHECK(new_rows.push_back(), i);
-                CHECKT(new_rows.cell<bool_p>(i));
+                CHECK(new_sheet.push_back(), i);
+                CHECKT(new_sheet.cell<bool_p>(i));
             }
-            CHECK(rows.append(new_rows), 13);
+            CHECK(sheet.append(new_sheet), 13);
         }
-        CHECK(rows.count(), 18);
-        CHECK(rows.capacity(), 32);
+        CHECK(sheet.count(), 18);
+        CHECK(sheet.capacity(), 32);
     }
 
-    void test_rows_iterate()
+    void test_sheet_iterate()
     {
         table1::default_row = table1::row();
-        table1::rows rows(128);
-        for (size_t i = 0; i < rows.capacity(); ++i)
-            rows.push_back();
+        table1::sheet sheet(128);
+        for (size_t i = 0; i < sheet.capacity(); ++i)
+            sheet.push_back();
         size_t how_many_expected{};
-        rows.iterate<SELECT(bool_p)>(
+        sheet.iterate<SELECT(bool_p)>(
             [&how_many_expected](auto e, auto& b)
             {
                 size_t index = e;
@@ -181,7 +164,7 @@ struct db_tests : public Cppunit
         CHECKT(how_many_expected > 0);
         size_t how_many{};
         size_t isum_expected{};
-        rows.iterate<SELECT(bool_p, int_p)>(
+        sheet.iterate<SELECT(bool_p, int_p)>(
             [&how_many, &isum_expected](auto e, auto& b, auto& i)
             {
                 size_t index = e;
@@ -194,7 +177,7 @@ struct db_tests : public Cppunit
         CHECK(how_many, how_many_expected);
         size_t isum{};
         double dsum_expected{};
-        rows.iterate<SELECT(int_p, float_p)>(
+        sheet.iterate<SELECT(int_p, float_p)>(
             [&isum, &dsum_expected](auto e, auto& i, auto& f)
             {
                 size_t index = e;
@@ -206,7 +189,7 @@ struct db_tests : public Cppunit
         CHECKT(dsum_expected > 0.0);
         CHECK(isum, isum_expected);
         double dsum{};
-        rows.iterate<SELECT(float_p)>(
+        sheet.iterate<SELECT(float_p)>(
             [&dsum](auto, auto& f)
             {
                 dsum += f;
@@ -218,10 +201,10 @@ struct db_tests : public Cppunit
     void test_list() override
     {
         test_row();
-        test_rows_constructor();
-        test_rows_push_back();
-        test_rows_append();
-        test_rows_iterate();
+        test_sheet_constructor();
+        test_sheet_push_back();
+        test_sheet_append();
+        test_sheet_iterate();
     }
 };
 

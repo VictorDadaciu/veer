@@ -38,14 +38,6 @@ using buttons = TABLE(
 
 using input_db = database<buttons>;
 
-inline table_row<buttons> default_button_row()
-{
-    table_row<buttons> row{};
-    row.cell<hold_duration_p>() = 0.4f;
-    row.cell<double_press_duration_p>() = 0.25f;
-    return row;
-}
-
 keycode SDL_keycode_to_veer_keycode(size_t);
 mouse_button SDL_mouse_button_to_veer_mouse_button(size_t);
 
@@ -63,7 +55,7 @@ public:
     glm::vec2 mouse_rel;
     glm::vec2 mouse_abs;
 
-    row_index<buttons> get_or_insert_in_keycode_map(keycode);
+    buttons::index get_or_insert_in_keycode_map(keycode);
 
     _VEER_SINGLETON(input_manager);
 };

@@ -79,7 +79,7 @@ inline constexpr bool failed(error_code code)
 #define VEER_SAFE_JUST_INIT(var, ...) VEER_SAFE_CALL(var.init(__VA_ARGS__))
 #define VEER_SAFE_INIT(var, ...) var; VEER_SAFE_JUST_INIT(var, __VA_ARGS__)
 
-#ifndef VEER_KEEP_PREFIX
+#ifndef VEER_DONT_STRIP_PREFIX
 #define LEGACY_FAILED                       VEER_LEGACY_FAILED
 #define SAFE_CALL                           VEER_SAFE_CALL
 #define SAFE_CALL_EXPECTED                  VEER_SAFE_CALL_EXPECTED

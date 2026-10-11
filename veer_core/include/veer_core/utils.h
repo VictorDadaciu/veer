@@ -138,7 +138,7 @@ public:                                                                    \
     }                                                                      \
 }
 
-#ifndef VEER_KEEP_PREFIX
+#ifndef VEER_DONT_STRIP_PREFIX
 #define DECLARE_NO_COPY_NO_MOVE VEER_DECLARE_NO_COPY_NO_MOVE
 #define DECLARE_NO_COPY         VEER_DECLARE_NO_COPY
 
