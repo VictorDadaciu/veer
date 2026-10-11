@@ -680,8 +680,7 @@ struct name : public base                                    \
 
 #define VEER_PROPERTY_ROOT(underlying) ve::property_root<underlying>
 
-#define VEER_DECLARE_LABEL(name) struct name : public ve::label_root {};
-#define VEER_DERIVE_LABEL(name) struct name : public ve::label_root {};
+#define VEER_DECLARE_LABEL(name) struct name : public ve::label_root
 
 
 #ifndef VEER_DONT_STRIP_PREFIX
@@ -704,6 +703,7 @@ struct name : public base                                    \
 
 #define PROPERTY_ROOT               VEER_PROPERTY_ROOT
 #define DERIVE_PROP                 VEER_DERIVE_PROP
+#define DECLARE_LABEL               VEER_DECLARE_LABEL
 #endif
 
 #include "db.inl"

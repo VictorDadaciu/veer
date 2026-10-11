@@ -12,7 +12,7 @@ DERIVE_PROP(int_p, PROPERTY_ROOT(int));
 DERIVE_PROP(float_p, PROPERTY_ROOT(float));
 DERIVE_PROP(char_p, PROPERTY_ROOT(char));
 
-struct label1 : public ve::label_root {};
+DECLARE_LABEL(label1) {};
 
 using table1 = TABLE(
     COLUMN_IMPL(bool_p),
