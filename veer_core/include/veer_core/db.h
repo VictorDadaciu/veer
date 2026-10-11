@@ -27,6 +27,7 @@ struct typelist { static constexpr size_t count = sizeof...(Ts); };
 
 consteval bool has_physical_size(meta_info);
 consteval bool is_template_of(meta_info, meta_info);
+consteval bool is_label(meta_info);
 consteval bool is_property(meta_info);
 consteval bool is_in_property_tree(meta_info);
 consteval bool is_descendent_of(meta_info, meta_info);
@@ -42,8 +43,12 @@ consteval meta_infos get_property_impls_from_columns(auto);
 consteval meta_infos get_properties_from_property_impls(auto);
 consteval meta_infos make_pointers(auto);
 
+struct label_root {};
 template<typename T>
-concept PhysicalData = std::is_default_constructible_v<T> && std::movable<T> && has_physical_size(^^T) && !is_in_property_tree(^^T);
+concept Label = is_label(^^T);
+
+template<typename T>
+concept PhysicalData = std::is_default_constructible_v<T> && std::movable<T> && has_physical_size(^^T) && !is_in_property_tree(^^T) && !Label<T>;
 template<typename T>
 concept Property = is_property(^^T);
 
@@ -114,25 +119,31 @@ template<typename T>
 concept PaddedColumn = is_template_of(^^T, ^^padded_column);
 
 template<typename T>
-concept QueryDescriptor = Property<T>;
+concept QueryDescriptor = Property<T> || Label<T>;
 
 template<typename T>
-concept TableDescriptor = PackedColumn<T> || PaddedColumn<T>;
-
-// template<QueryDescriptor... QueryDescriptors>
-// struct select;
-
-// template<>
-// struct select<> { using properties = typelist<>; };
+concept TableDescriptor = PackedColumn<T> || PaddedColumn<T> || Label<T>;
 
 template<QueryDescriptor... QueryDescriptors>
-struct select
+struct select;
+
+template<>
+struct select<>
+{
+    using properties_list = typelist<>;
+    using labels_list = typelist<>;
+};
+
+template<QueryDescriptor... QueryDescriptors>
+struct select : public typelist<QueryDescriptors...>
 { 
 private:
     static constexpr auto properties_array = std::define_static_array(get_properties(std::vector{^^QueryDescriptors...}));
+    static constexpr auto labels_array = std::define_static_array(get_labels(std::vector{^^QueryDescriptors...}));
 
 public:
-    using properties = [:substitute(^^typelist, properties_array):];
+    using properties_list = [:substitute(^^typelist, properties_array):];
+    using labels_list = [:substitute(^^typelist, labels_array):];
 };
 template<typename T>
 concept Selection = is_template_of(^^T, ^^select);
@@ -152,9 +163,11 @@ private:
     template<Table... Tables> requires (sizeof...(Tables) > 0)
     friend class database;
 
-    static constexpr auto columns_array = std::define_static_array(get_columns(std::vector{^^TableDescriptors...}));
+    static constexpr auto descriptor_array = std::define_static_array(std::vector{^^TableDescriptors...});
+    static constexpr auto columns_array = std::define_static_array(get_columns(descriptor_array));
     static constexpr auto property_impls_array = std::define_static_array(get_property_impls_from_columns(columns_array));
     static constexpr auto properties_array = std::define_static_array(get_properties_from_property_impls(property_impls_array));
+    static constexpr auto labels_array = std::define_static_array(get_labels(descriptor_array));
 
     struct property_location
     {
@@ -162,11 +175,15 @@ private:
         size_t internal_index;
     };
 
-    static consteval size_t flat_property_index(meta_info, std::vector<size_t> = {});
-    static consteval property_location property_location_from_flat_index(size_t);
     static consteval bool is_property_of(meta_info r) { return flat_property_index(r) < properties_array.size(); }
+    static consteval bool is_label_of(meta_info);
+    static consteval bool matches_labels(meta_infos);
+
     static consteval meta_info underlying_type_of(meta_info r) { return template_arguments_of(property_impls_array[flat_property_index(r)])[1]; }
     static consteval meta_info get_selection_indices(meta_infos);
+
+    static consteval size_t flat_property_index(meta_info, std::vector<size_t> = {});
+    static consteval property_location property_location_from_flat_index(size_t);
 
     struct handle_data
     {
@@ -184,6 +201,7 @@ public:
     using columns_list = [:substitute(^^typelist, columns_array):];
     static_assert(columns_list::count > 0, "Table must have at least one column!");
     using properties_list = [:substitute(^^typelist, properties_array):];
+    using labels_list = [:substitute(^^typelist, labels_array):];
 
     class sheet;
 private:
@@ -196,6 +214,7 @@ private:
 
 public:
     template<Property P> static constexpr bool is_property_of() noexcept { return is_property_of(^^P); }
+    template<Label L> static constexpr bool is_label_of() noexcept { return is_label_of(^^L); }
     template<Property P> static constexpr property_location property_location_of() noexcept { return property_location_from_flat_index(flat_property_index(^^P)); }
     template<Selection S> static constexpr bool matches() noexcept;
 
@@ -308,10 +327,12 @@ public:
         template<Selection S, typename Func> requires (matches<S>())
         void iterate(Func&& func)
         {
-            if constexpr (S::properties::count == 0)
-                iterate(std::move(func));
+            if constexpr (S::properties_list::count == 0) iterate(std::move(func));
             else
-                [:substitute(^^iterate_helper, template_arguments_of(get_selection_indices(template_arguments_of(^^S)))):]::iterate(std::move(func), *this);
+            {
+                using Ps = S::properties_list;
+                [:substitute(^^iterate_helper, template_arguments_of(get_selection_indices(template_arguments_of(dealias(^^Ps))))):]::iterate(std::move(func), *this);
+            }
         }
 
     protected:
@@ -579,14 +600,14 @@ public:
     template<Selection S, typename Func>
     inline static void iterate(Func&& func)
     {
-        if constexpr (S::properties::count == 0)
+        if constexpr (S::count == 0)
             iterate(std::move(func));
         else
             template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
             {
                 static constexpr meta_info table = tables_array[i];
                 if constexpr ([:table:]::template matches<S>())
-                std::get<i>(m_tables).template iterate<S>(std::move(func));
+                    std::get<i>(m_tables).template iterate<S>(std::move(func));
             }
     }
 
@@ -597,19 +618,33 @@ public:
             iterate(std::move(func));
         else
             template for (constexpr size_t i : std::views::iota(0zu, F::count))
-               std::get<index_of_table(template_arguments_of(^^F)[i])>(m_tables).iterate(std::move(func));
+            {
+                static constexpr size_t I = index_of_table(template_arguments_of(^^F)[i]);
+                if constexpr (I < tables_array.size())
+                    std::get<I>(m_tables).iterate(std::move(func));
+            }
     }
 
     template<Selection S, From F, typename Func>
     inline static void iterate(Func&& func)
     {
-        if constexpr (S::properties::count == 0 && F::count == 0)
+        if constexpr (S::count == 0 && F::count == 0)
             iterate(std::move(func));
         else if constexpr (F::count == 0)
             iterate<S>(std::move(func));
+        else if constexpr (S::count == 0)
+            iterate<F>(std::move(func));
         else
             template for (constexpr size_t i : std::views::iota(0zu, F::count))
-               std::get<index_of_table(template_arguments_of(^^F)[i])>(m_tables).template iterate<S>(std::move(func));
+            {
+                static constexpr size_t I = index_of_table(template_arguments_of(^^F)[i]);
+                if constexpr (I < tables_array.size())
+                {
+                    static constexpr meta_info table = tables_array[I];
+                    if constexpr ([:table:]::template matches<S>())
+                       std::get<I>(m_tables).template iterate<S>(std::move(func));
+                }
+            }
     }
 
 private:
@@ -617,13 +652,13 @@ private:
 };
 }
 
-#define VEER_DERIVE_PROP(name, property_base_t)                            \
-struct name : public property_base_t                                       \
-{                                                                          \
-    static_assert(ve::PropertyBranch<property_base_t>);                    \
-    using target_type = property_base_t::target_type;                      \
-    using property_root_type = property_base_t::property_root_type;        \
-    using property_type = name;                                            \
+#define VEER_DERIVE_PROP(name, base)                                    \
+struct name : public base                                    \
+{                                                                       \
+    static_assert(ve::PropertyBranch<base>);                 \
+    using target_type = base::target_type;                   \
+    using property_root_type = base::property_root_type;     \
+    using property_type = name;                                         \
 }
 
 #define VEER_TABLE(...) ve::table<__VA_ARGS__>
@@ -644,6 +679,9 @@ struct name : public property_base_t                                       \
 #define VEER_PARAM_TYPE(param) std::remove_reference_t<std::remove_cv_t<decltype(param)>>
 
 #define VEER_PROPERTY_ROOT(underlying) ve::property_root<underlying>
+
+#define VEER_DECLARE_LABEL(name) struct name : public ve::label_root {};
+#define VEER_DERIVE_LABEL(name) struct name : public ve::label_root {};
 
 
 #ifndef VEER_DONT_STRIP_PREFIX

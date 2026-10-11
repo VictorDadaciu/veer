@@ -14,6 +14,21 @@ consteval bool is_template_of(meta_info type, meta_info tmpl)
     return has_template_arguments(type) && template_of(type) == tmpl;
 }
 
+consteval bool is_label(meta_info base)
+{
+    if (has_physical_size(base))
+        return false;
+    do
+    {
+        base = base_of(base);
+        if (base == ^^null_type)
+            return false;
+        else if (base == ^^label_root)
+            return true;
+    } while(true);
+    return false;
+}
+
 consteval bool is_property(meta_info base)
 {
     do
@@ -24,6 +39,7 @@ consteval bool is_property(meta_info base)
         else if (is_template_of(base, ^^property_root))
             return true;
     } while(true);
+    return false;
 }
 
 consteval bool is_in_property_tree(meta_info r)
@@ -68,6 +84,15 @@ consteval meta_infos get_columns(auto specs)
     meta_infos columns;
     for (auto spec : specs)
         if (is_template_of(spec, ^^packed_column) || is_template_of(spec, ^^padded_column))
+            columns.push_back(spec);
+    return columns;
+}
+
+consteval meta_infos get_labels(auto specs)
+{
+    meta_infos columns;
+    for (auto spec : specs)
+        if (is_label(spec))
             columns.push_back(spec);
     return columns;
 }
@@ -170,11 +195,31 @@ consteval meta_info table<TableDescriptors...>::get_selection_indices(meta_infos
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+consteval bool table<TableDescriptors...>::is_label_of(meta_info label)
+{
+    for (meta_info table_label : labels_array)
+        if (label == table_label)
+            return true;
+    return false;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+consteval bool table<TableDescriptors...>::matches_labels(meta_infos labels)
+{
+    for (meta_info label : labels)
+        if (!is_label_of(label))
+            return false;
+    return true;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
 template<Selection S>
 constexpr bool table<TableDescriptors...>::matches() noexcept
 {
-    using selection_properties = S::properties;
-    return get_selection_indices(std::meta::template_arguments_of(std::meta::dealias(^^selection_properties))) != ^^null_type;
+    using Ps = S::properties_list;
+    using Ls = S::labels_list;
+    return matches_labels(std::meta::template_arguments_of(std::meta::dealias(^^Ls))) &&
+        get_selection_indices(std::meta::template_arguments_of(std::meta::dealias(^^Ps))) != ^^null_type;
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)

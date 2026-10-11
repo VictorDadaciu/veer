@@ -10,12 +10,18 @@
 DERIVE_PROP(bool_p, PROPERTY_ROOT(bool));
 DERIVE_PROP(int_p, PROPERTY_ROOT(int));
 DERIVE_PROP(float_p, PROPERTY_ROOT(float));
+DERIVE_PROP(char_p, PROPERTY_ROOT(char));
+
+struct label1 : public ve::label_root {};
 
 using table1 = TABLE(
     COLUMN_IMPL(bool_p),
     COLUMN_IMPL(int_p),
-    COLUMN_IMPL(float_p)
+    COLUMN_IMPL(float_p),
+    label1
 );
+
+using db = ve::database<table1>;
 
 struct db_tests : public Cppunit
 {
@@ -210,6 +216,15 @@ struct db_tests : public Cppunit
 
 namespace static_tests
 {
+static_assert(table1::matches<SELECT()>());
+static_assert(table1::matches<SELECT(label1)>());
+static_assert(table1::matches<SELECT(bool_p, label1)>());
+static_assert(table1::matches<SELECT(bool_p, int_p)>());
+
+static_assert(!table1::matches<SELECT(char_p)>());
+static_assert(!table1::matches<SELECT(char_p, int_p)>());
+static_assert(!table1::matches<SELECT(char_p, int_p, label1)>());
+
 static_assert(std::is_same_v<bool_p::target_type, bool>);
 static_assert(std::is_same_v<int_p::target_type, int>);
 static_assert(std::is_same_v<float_p::target_type, float>);
