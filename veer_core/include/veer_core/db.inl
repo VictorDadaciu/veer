@@ -230,11 +230,11 @@ table<TableDescriptors...>::sheet::sheet(size_t initial_capacity) : m_capacity(i
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-table<TableDescriptors...>::sheet::sheet(const sheet& other) : m_capacity(other.m_capacity), m_count(other.m_count)
+table<TableDescriptors...>::sheet::sheet(const sheet& other) requires (std::copyable<TableDescriptors> && ...) : m_capacity(other.m_capacity), m_count(other.m_count)
 {
     allocate_and_initialize_views();
     template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
-        std::uninitialized_copy_n(std::get<i>(other.m_views), m_count, std::get<i>());
+        std::uninitialized_copy_n(std::get<i>(other.m_views), m_count, std::get<i>(m_views));
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
@@ -245,7 +245,7 @@ table<TableDescriptors...>::sheet::sheet(sheet&& other) :
     m_data(std::move(other.m_data)) {}
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-table<TableDescriptors...>::sheet& table<TableDescriptors...>::sheet::operator=(const sheet& other)
+table<TableDescriptors...>::sheet& table<TableDescriptors...>::sheet::operator=(const sheet& other)  requires (std::copyable<TableDescriptors> && ...)
 {
     m_capacity = other.m_capacity;
     m_count = other.m_count;
@@ -267,7 +267,7 @@ table<TableDescriptors...>::sheet& table<TableDescriptors...>::sheet::operator=(
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-void table<TableDescriptors...>::sheet::set(size_t i, const table<TableDescriptors...>::row& r) noexcept
+void table<TableDescriptors...>::sheet::set(size_t i, const table<TableDescriptors...>::row& r) noexcept requires (std::copyable<TableDescriptors> && ...)
 {
     assert(i < m_count);
     template for (constexpr size_t I : std::views::iota(0zu, columns_list::count))
@@ -283,7 +283,7 @@ void table<TableDescriptors...>::sheet::set(size_t i, table<TableDescriptors...>
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-void table<TableDescriptors...>::sheet::set(size_t at, const table<TableDescriptors...>::sheet& other) noexcept
+void table<TableDescriptors...>::sheet::set(size_t at, const table<TableDescriptors...>::sheet& other) noexcept requires (std::copyable<TableDescriptors> && ...)
 {
     assert(at + other.m_count <= m_count);
     template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
@@ -299,7 +299,18 @@ void table<TableDescriptors...>::sheet::set(size_t at, table<TableDescriptors...
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-size_t table<TableDescriptors...>::sheet::push_back(const table<TableDescriptors...>::row& r)
+size_t table<TableDescriptors...>::sheet::push_back()
+{
+    size_t ret = m_count++;
+    if (m_count > m_capacity)
+        reallocate(calculate_new_capacity_for(m_count));
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::construct_at(std::get<i>(m_views) + ret);
+    return ret;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+size_t table<TableDescriptors...>::sheet::push_back(const table<TableDescriptors...>::row& r) requires (std::copyable<TableDescriptors> && ...)
 {
     size_t ret = m_count++;
     if (m_count > m_capacity)
@@ -321,7 +332,36 @@ size_t table<TableDescriptors...>::sheet::push_back(table<TableDescriptors...>::
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-size_t table<TableDescriptors...>::sheet::append(const table<TableDescriptors...>::sheet& other)
+size_t table<TableDescriptors...>::sheet::append(size_t n)
+{
+    assert(n > 0);
+    size_t new_count = m_count + n;
+    if (new_count > m_capacity)
+        reallocate(calculate_new_capacity_for(new_count));
+    size_t old_count = m_count;
+    m_count = new_count;
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::uninitialized_default_construct_n(std::get<i>(m_views) + old_count, n);
+    return old_count;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+size_t table<TableDescriptors...>::sheet::append(size_t n, const table<TableDescriptors...>::row& r) requires (std::copyable<TableDescriptors> && ...)
+{
+    assert(n > 0);
+    size_t new_count = m_count + n;
+    if (new_count > m_capacity)
+        reallocate(calculate_new_capacity_for(new_count));
+    size_t old_count = m_count;
+    m_count = new_count;
+    template for (constexpr size_t I : std::views::iota(0zu, columns_list::count))
+        for (size_t i = old_count; i < m_count; ++i)
+            std::construct_at(std::get<I>(m_views) + i, std::get<I>(r.m_cols));
+    return old_count;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+size_t table<TableDescriptors...>::sheet::append(const table<TableDescriptors...>::sheet& other) requires (std::copyable<TableDescriptors> && ...)
 {
     size_t new_count = m_count + other.m_count;
     if (new_count > m_capacity)
@@ -344,6 +384,23 @@ size_t table<TableDescriptors...>::sheet::append(table<TableDescriptors...>::she
     template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
         std::uninitialized_move_n(std::get<i>(other.m_views), other.m_count, std::get<i>(m_views) + old_count);
     return old_count;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+void table<TableDescriptors...>::sheet::clear() noexcept
+{
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        if constexpr (!std::is_trivially_destructible_v<typename [:columns_array[i]:]>)
+            std::ranges::destroy_n(std::get<i>(m_views), m_count);
+    m_count = 0zu;
+    m_capacity = 1zu;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+void table<TableDescriptors...>::sheet::reserve(size_t new_capacity)
+{
+    if (new_capacity > m_capacity)
+        reallocate(new_capacity);
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
@@ -393,9 +450,26 @@ table<TableDescriptors...>::db_sheet::db_sheet(size_t initial_capacity)
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-size_t table<TableDescriptors...>::db_sheet::push_back(const table<TableDescriptors...>::row& r)
+size_t table<TableDescriptors...>::db_sheet::push_back()
 {
-    size_t ret = sheet::push_back(r);
+    size_t ret = m_count++;
+    if (m_count > m_capacity)
+        reallocate(sheet::calculate_new_capacity_for(m_count));
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::construct_at(std::get<i>(m_views) + ret);
+    m_internal_data.handle_data_indices[ret] = std::numeric_limits<size_t>::max();
+    m_internal_data.remove_flag[ret] = false;
+    return ret;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+size_t table<TableDescriptors...>::db_sheet::push_back(const table<TableDescriptors...>::row& r) requires (std::copyable<TableDescriptors> && ...)
+{
+    size_t ret = m_count++;
+    if (m_count > m_capacity)
+        reallocate(sheet::calculate_new_capacity_for(m_count));
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::construct_at(std::get<i>(m_views) + ret, std::get<i>(r.m_cols));
     m_internal_data.handle_data_indices[ret] = std::numeric_limits<size_t>::max();
     m_internal_data.remove_flag[ret] = false;
     return ret;
@@ -404,27 +478,76 @@ size_t table<TableDescriptors...>::db_sheet::push_back(const table<TableDescript
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
 size_t table<TableDescriptors...>::db_sheet::push_back(table<TableDescriptors...>::row&& r)
 {
-    size_t ret = sheet::push_back(std::move(r));
+    size_t ret = m_count++;
+    if (m_count > m_capacity)
+        reallocate(sheet::calculate_new_capacity_for(m_count));
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::construct_at(std::get<i>(m_views) + ret, std::move(std::get<i>(r.m_cols)));
     m_internal_data.handle_data_indices[ret] = std::numeric_limits<size_t>::max();
     m_internal_data.remove_flag[ret] = false;
     return ret;
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-size_t table<TableDescriptors...>::db_sheet::append(const table<TableDescriptors...>::sheet& other)
+size_t table<TableDescriptors...>::db_sheet::append(size_t n)
 {
-    size_t old_count = sheet::append(other);
-    memset(reinterpret_cast<void*>(m_internal_data.handle_data_indices + old_count), 0b11111111, other.m_count * sizeof(size_t));
-    memset(reinterpret_cast<void*>(m_internal_data.remove_flag + old_count), 0b00000000, other.m_count * sizeof(bool));
+    assert(n > 0);
+    size_t new_count = m_count + n;
+    if (new_count > m_capacity)
+        reallocate(sheet::calculate_new_capacity_for(new_count));
+    size_t old_count = m_count;
+    m_count = new_count;
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::uninitialized_default_construct_n(std::get<i>(m_views) + old_count, n);
+    memset(m_internal_data.handle_data_indices + old_count, 0b11111111, n * sizeof(size_t));
+    memset(m_internal_data.remove_flag + old_count, 0b00000000, n * sizeof(bool));
+    return old_count;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+size_t table<TableDescriptors...>::db_sheet::append(size_t n, const table<TableDescriptors...>::row& r) requires (std::copyable<TableDescriptors> && ...)
+{
+    assert(n > 0);
+    size_t new_count = m_count + n;
+    if (new_count > m_capacity)
+        reallocate(sheet::calculate_new_capacity_for(new_count));
+    size_t old_count = m_count;
+    m_count = new_count;
+    template for (constexpr size_t I : std::views::iota(0zu, columns_list::count))
+        for (size_t i = old_count; i < m_count; ++i)
+            std::construct_at(std::get<I>(m_views) + i, std::get<I>(r.m_cols));
+    memset(m_internal_data.handle_data_indices + old_count, 0b11111111, n * sizeof(size_t));
+    memset(m_internal_data.remove_flag + old_count, 0b00000000, n * sizeof(bool));
+    return old_count;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+size_t table<TableDescriptors...>::db_sheet::append(const table<TableDescriptors...>::sheet& other) requires (std::copyable<TableDescriptors> && ...)
+{
+    size_t new_count = m_count + other.m_count;
+    if (new_count > m_capacity)
+        reallocate(sheet::calculate_new_capacity_for(new_count));
+    size_t old_count = m_count;
+    m_count = new_count;
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::uninitialized_copy_n(std::get<i>(other.m_views), other.m_count, std::get<i>(m_views) + old_count);
+    memset(m_internal_data.handle_data_indices + old_count, 0b11111111, other.m_count * sizeof(size_t));
+    memset(m_internal_data.remove_flag + old_count, 0b00000000, other.m_count * sizeof(bool));
     return old_count;
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
 size_t table<TableDescriptors...>::db_sheet::append(table<TableDescriptors...>::sheet&& other)
 {
-    size_t old_count = sheet::append(std::move(other));
-    memset(reinterpret_cast<void*>(m_internal_data.handle_data_indices + old_count), 0b11111111, other.m_count * sizeof(size_t));
-    memset(reinterpret_cast<void*>(m_internal_data.remove_flag + old_count), 0b00000000, other.m_count * sizeof(bool));
+    size_t new_count = m_count + other.m_count;
+    if (new_count > m_capacity)
+        reallocate(sheet::calculate_new_capacity_for(new_count));
+    size_t old_count = m_count;
+    m_count = new_count;
+    template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
+        std::uninitialized_move_n(std::get<i>(other.m_views), other.m_count, std::get<i>(m_views) + old_count);
+    memset(m_internal_data.handle_data_indices + old_count, 0b11111111, other.m_count * sizeof(size_t));
+    memset(m_internal_data.remove_flag + old_count, 0b00000000, other.m_count * sizeof(bool));
     return old_count;
 }
 
@@ -448,7 +571,7 @@ void table<TableDescriptors...>::db_sheet::remove(size_t from, size_t to) noexce
 {
     size_t n = to - from;
     assert(n > 0zu && to <= m_count);
-    memset(reinterpret_cast<void*>(m_internal_data.remove_flag + from), true, n * sizeof(bool));
+    memset(m_internal_data.remove_flag + from, true, n * sizeof(bool));
     m_internal_data.row_has_been_removed = true;
 }
 
@@ -459,6 +582,20 @@ void table<TableDescriptors...>::db_sheet::vacuum() noexcept
         return;
     m_count = vacuum_helper();
     m_internal_data.row_has_been_removed = false;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+void table<TableDescriptors...>::db_sheet::clear() noexcept
+{
+    sheet::clear();
+    m_internal_data.clear();
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+void table<TableDescriptors...>::db_sheet::reserve(size_t new_capacity)
+{
+    if (new_capacity > m_capacity)
+        reallocate(new_capacity);
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
@@ -528,9 +665,8 @@ void table<TableDescriptors...>::db_sheet::reallocate(size_t new_capacity)
     db_sheet new_sheet(new_capacity);
     template for (constexpr size_t i : std::views::iota(0zu, columns_list::count))
         std::uninitialized_move_n(std::get<i>(m_views), m_count, std::get<i>(new_sheet.m_views));
-    // TODO: these could just be copies
-    std::uninitialized_move_n(m_internal_data.handle_data_indices, m_count, new_sheet.m_internal_data.handle_data_indices);
-    std::uninitialized_move_n(m_internal_data.remove_flag, m_count, new_sheet.m_internal_data.remove_flag);
+    memcpy(new_sheet.m_internal_data.handle_data_indices, m_internal_data.handle_data_indices, m_count * sizeof(size_t));
+    memcpy(new_sheet.m_internal_data.remove_flag, m_internal_data.remove_flag, m_count);
     m_internal_data = std::move(new_sheet.m_internal_data);
     m_data = std::move(new_sheet.m_data);
     m_views = std::move(new_sheet.m_views);
@@ -604,6 +740,14 @@ size_t table<TableDescriptors...>::db_sheet::internal_data::get_free_handle_data
     size_t ret = free_handle_data_index;
     free_handle_data_index = handle_datas[free_handle_data_index].row_index;
     return ret;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+void table<TableDescriptors...>::db_sheet::internal_data::clear() noexcept
+{
+    handle_datas.clear();
+    free_handle_data_index = std::numeric_limits<size_t>::max();
+    row_has_been_removed = false;
 }
 
 template<Table... Tables> requires (sizeof...(Tables) > 0)

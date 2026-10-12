@@ -4,13 +4,33 @@
 #include <veer_core/utils.h>
 
 #include <cstdlib>
+#include <memory>
 #include <print>
 #include <type_traits>
+
+struct nontrivial_type
+{
+    inline static size_t constructed = 0zu;
+    inline static size_t destroyed = 0zu;
+
+    nontrivial_type(size_t i) : value(i)
+    {
+        ++constructed;
+    }
+
+    ~nontrivial_type()
+    {
+        ++destroyed;
+    }
+
+    size_t value{};
+};
 
 DERIVE_PROP(bool_p, PROPERTY_ROOT(bool));
 DERIVE_PROP(int_p, PROPERTY_ROOT(int));
 DERIVE_PROP(float_p, PROPERTY_ROOT(float));
 DERIVE_PROP(char_p, PROPERTY_ROOT(char));
+DERIVE_PROP(ptr_p, PROPERTY_ROOT(std::unique_ptr<nontrivial_type>));
 
 DECLARE_LABEL(label1) {};
 
@@ -21,7 +41,18 @@ using table1 = TABLE(
     label1
 );
 
-using db = ve::database<table1>;
+using table2 = TABLE(
+    COLUMN_IMPL(bool_p),
+    COLUMN_IMPL(int_p),
+    COLUMN_IMPL(char_p)
+);
+
+using table3 = TABLE(
+    COLUMN_IMPL(int_p),
+    COLUMN_IMPL(ptr_p)
+);
+
+using db = ve::database<table1, table2, table3>;
 
 struct db_tests : public Cppunit
 {
@@ -56,11 +87,33 @@ struct db_tests : public Cppunit
         table1::sheet sheet3(10);
         CHECK(sheet3.count(), 0zu);
         CHECK(sheet3.capacity(), 10zu);
+        table1::sheet sheet4(sheet3);
+        CHECK(sheet4.count(), 0zu);
+        CHECK(sheet4.capacity(), 10zu);
+    }
+
+    void test_sheet_reserve()
+    {
+        table1::sheet sheet1{};
+        sheet1.reserve(10zu);
+        CHECK(sheet1.count(), 0zu);
+        CHECK(sheet1.capacity(), 10zu);
+        table1::sheet sheet2 = std::move(sheet1);
+        CHECK(sheet2.count(), 0zu);
+        CHECK(sheet2.capacity(), 10zu);
+        sheet2.reserve(50zu);
+        CHECK(sheet2.count(), 0zu);
+        CHECK(sheet2.capacity(), 50zu);
+        table1::sheet sheet3(10);
+        CHECK(sheet3.count(), 0zu);
+        CHECK(sheet3.capacity(), 10zu);
+        sheet3.reserve(5zu);
+        CHECK(sheet3.count(), 0zu);
+        CHECK(sheet3.capacity(), 10zu);
     }
 
     void test_sheet_push_back()
     {
-        table1::default_row = table1::row();
         table1::sheet sheet{};
         for (size_t i = 0; i < 5; ++i)
         {
@@ -77,17 +130,16 @@ struct db_tests : public Cppunit
             row.set<bool_p>(true);
             row.set<int_p>(10);
             row.set<float_p>(100.f);
-            table1::default_row = row;
-        }
-        for (size_t i = 5; i < 10; ++i)
-        {
-            CHECK(sheet.push_back(), i);
-            size_t count = i + 1;
-            CHECK(sheet.count(), count);
-            CHECK(sheet.capacity(), ve::next_power_of_2(count));
-            CHECKT(sheet.cell<bool_p>(i));
-            CHECK(sheet.cell<int_p>(i), 10);
-            CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), 100.f));
+            for (size_t i = 5; i < 10; ++i)
+            {
+                CHECK(sheet.push_back(row), i);
+                size_t count = i + 1;
+                CHECK(sheet.count(), count);
+                CHECK(sheet.capacity(), ve::next_power_of_2(count));
+                CHECKT(sheet.cell<bool_p>(i));
+                CHECK(sheet.cell<int_p>(i), 10);
+                CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), 100.f));
+            }
         }
         for (size_t i = 10; i < 15; ++i)
         {
@@ -96,7 +148,7 @@ struct db_tests : public Cppunit
                 row.set<bool_p>(i % 2);
                 row.set<int_p>(i);
                 row.set<float_p>(i);
-                CHECK(sheet.push_back(row), i);
+                CHECK(sheet.push_back(std::move(row)), i);
             }
             size_t count = i + 1;
             CHECK(sheet.count(), count);
@@ -109,7 +161,6 @@ struct db_tests : public Cppunit
 
     void test_sheet_append()
     {
-        table1::default_row = table1::row();
         table1::sheet sheet{};
         for (size_t i = 0; i < 10; ++i)
         {
@@ -119,42 +170,22 @@ struct db_tests : public Cppunit
         CHECK(sheet.count(), 10);
         CHECK(sheet.capacity(), 16);
         {
-            {
-                table1::row row{};
-                row.set<bool_p>(true);
-                table1::default_row = row;
-            }
+            table1::row row{};
+            row.set<bool_p>(true);
             table1::sheet new_sheet(3);
             for (size_t i = 0; i < new_sheet.capacity(); ++i)
             {
-                CHECK(new_sheet.push_back(), i);
+                CHECK(new_sheet.push_back(row), i);
                 CHECKT(new_sheet.cell<bool_p>(i));
             }
             CHECK(sheet.append(new_sheet), 10);
         }
         CHECK(sheet.count(), 13);
         CHECK(sheet.capacity(), 16);
-        {
-            {
-                table1::row row{};
-                row.set<bool_p>(true);
-                table1::default_row = row;
-            }
-            table1::sheet new_sheet(5);
-            for (size_t i = 0; i < new_sheet.capacity(); ++i)
-            {
-                CHECK(new_sheet.push_back(), i);
-                CHECKT(new_sheet.cell<bool_p>(i));
-            }
-            CHECK(sheet.append(new_sheet), 13);
-        }
-        CHECK(sheet.count(), 18);
-        CHECK(sheet.capacity(), 32);
     }
 
     void test_sheet_iterate()
     {
-        table1::default_row = table1::row();
         table1::sheet sheet(128);
         for (size_t i = 0; i < sheet.capacity(); ++i)
             sheet.push_back();
@@ -202,15 +233,51 @@ struct db_tests : public Cppunit
             }
         );
         CHECKT(ve::fuzzy_eq(dsum, dsum_expected));
+
+        sheet.clear();
+        CHECK(sheet.count(), 0zu);
+        CHECK(sheet.capacity(), 1zu);
+    }
+
+    void test_sheet_nontrivial()
+    {
+        table3::sheet sheet(128);
+        CHECK(sheet.count(), 0zu);
+        CHECK(sheet.capacity(), 128zu);
+        CHECK(nontrivial_type::constructed, 0zu);
+        CHECK(nontrivial_type::destroyed, 0zu);
+        for (size_t i = 0; i < sheet.capacity(); ++i)
+        {
+            table3::row row{};
+            row.cell<int_p>() = static_cast<int>(i) - 64;
+            row.cell<ptr_p>() = std::make_unique<nontrivial_type>(i);
+            sheet.push_back(std::move(row));
+        }
+        CHECK(nontrivial_type::constructed, 128zu);
+        CHECK(nontrivial_type::destroyed, 0zu);
+        sheet.clear();
+        CHECK(sheet.count(), 0zu);
+        CHECK(sheet.capacity(), 1zu);
+        CHECK(nontrivial_type::constructed, 128zu);
+        CHECK(nontrivial_type::destroyed, 128zu);
+    }
+
+    void test_db_at_init()
+    {
+        CHECK(db::count<table1>(), db::count<table2>());
+        CHECK(db::capacity<table1>(), db::capacity<table2>());
     }
 
     void test_list() override
     {
         test_row();
         test_sheet_constructor();
+        test_sheet_reserve();
         test_sheet_push_back();
         test_sheet_append();
         test_sheet_iterate();
+        test_sheet_nontrivial();
+        test_db_at_init();
     }
 };
 

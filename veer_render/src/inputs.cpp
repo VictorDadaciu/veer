@@ -263,15 +263,10 @@ namespace ve
 error_code input_manager::init()
 {
     // for mouse buttons
-    {
-        buttons::row row{};
-        row.cell<hold_duration_p>() = 0.4f;
-        row.cell<double_press_duration_p>() = 0.25f;
-        buttons::default_row = row;
-    }
-    input_db::push_back<buttons>();
-    input_db::push_back<buttons>();
-    input_db::push_back<buttons>();
+    buttons::row row{};
+    row.cell<hold_duration_p>() = 0.4f;
+    row.cell<double_press_duration_p>() = 0.25f;
+    input_db::append(3zu, row);
     return error_code::success;
 }
 

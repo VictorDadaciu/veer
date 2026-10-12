@@ -86,14 +86,14 @@ void run_db()
     ve::info("Starting battle!");
 
     ve::info("Shooting defenders' arrows!");
-    db::iterate<SELECT(range, damage), FROM()>([](const auto& i, auto& rng, auto& dmg)
+    db::iterate<SELECT(range, damage)>([](const auto& i, auto& rng, auto& dmg)
     {
         dmg += rng;
         ve::info("defender: {}, {}", dmg, rng);
     });
     
     ve::info("Calculating attackers' position!");
-    db::iterate<SELECT(position3, speed), FROM()>([](const auto& i, auto& pos, auto& spd)
+    db::iterate<SELECT(position3, speed)>([](const auto& i, auto& pos, auto& spd)
     {
         pos += glm::vec3(10, 10, 10);
         spd += static_cast<float>(i);
@@ -101,7 +101,7 @@ void run_db()
     });
 
     ve::info("Calculating health!");
-    db::iterate<SELECT(health), FROM()>([](const auto& i, auto& hp)
+    db::iterate<SELECT(health)>([](const auto& i, auto& hp)
     {
         hp -= 5 + static_cast<PARAM_TYPE(hp)>(i);
         IF_DECLTYPE_IS(i, defenders::index)
@@ -113,6 +113,7 @@ void run_db()
             ve::info("attacker: {}", hp);
         }
     });
+    db::clear_all();
 
     ve::info("Finished battle!");
 }
@@ -266,8 +267,8 @@ int main()
 {
     ve::log::init("arena", ve::log::level::debug);  
 
-    if (false) run_db();
-    run_gfx();
+    if (true) run_db();
+    else run_gfx();
     
     return 0;
 }

@@ -258,16 +258,15 @@ public:
     private:
         typename [:substitute(^^std::tuple, columns_array):] m_cols;
     };
-    inline static row default_row{};
 
     class sheet
     {
     public:
         sheet(size_t=1zu);
 
-        sheet(const sheet&);
+        sheet(const sheet&) requires (std::copyable<TableDescriptors> && ...);
         sheet(sheet&&);
-        sheet& operator=(const sheet&);
+        sheet& operator=(const sheet&) requires (std::copyable<TableDescriptors> && ...);
         sheet& operator=(sheet&&);
 
         size_t capacity() const noexcept { return m_capacity; }
@@ -307,16 +306,22 @@ public:
             std::get<internal_index>(std::get<column_index>(m_views)[i]).value = std::move(static_cast<ConvertTo>(std::move(value)));
         }
         
-        void set(size_t, const row&) noexcept;
+        void set(size_t, const row&) noexcept requires (std::copyable<TableDescriptors> && ...);
         void set(size_t, row&&) noexcept;
-        void set(size_t, const sheet&) noexcept;
+        void set(size_t, const sheet&) noexcept requires (std::copyable<TableDescriptors> && ...);
         void set(size_t, sheet&&) noexcept;
-        
-        size_t push_back(const row& r=default_row);
+
+        size_t push_back();
+        size_t push_back(const row&) requires (std::copyable<TableDescriptors> && ...);
         size_t push_back(row&&);
 
-        size_t append(const sheet&);
+        size_t append(size_t);
+        size_t append(size_t, const row&) requires (std::copyable<TableDescriptors> && ...);
+        size_t append(const sheet&) requires (std::copyable<TableDescriptors> && ...);
         size_t append(sheet&&);
+
+        void clear() noexcept;
+        void reserve(size_t);
 
         template<typename Func>
         void iterate(Func&& func)
@@ -334,6 +339,8 @@ public:
                 [:substitute(^^iterate_helper, template_arguments_of(get_selection_indices(template_arguments_of(dealias(^^Ps))))):]::iterate(std::move(func), *this);
             }
         }
+
+        ~sheet() { clear(); }
 
     protected:
         void allocate_and_initialize_views();
@@ -389,11 +396,17 @@ private:
         db_sheet& operator=(const db_sheet&) = delete;
         db_sheet& operator=(db_sheet&&) = delete;
 
-        size_t push_back(const row& r=default_row);
+        size_t push_back();
+        size_t push_back(const row&) requires (std::copyable<TableDescriptors> && ...);
         size_t push_back(row&&);
 
-        size_t append(const sheet&);
+        size_t append(size_t);
+        size_t append(size_t, const row&) requires (std::copyable<TableDescriptors> && ...);
+        size_t append(const sheet&) requires (std::copyable<TableDescriptors> && ...);
         size_t append(sheet&&);
+
+        void clear() noexcept;
+        void reserve(size_t);
 
         bool will_be_removed(size_t) const noexcept;
         void remove(size_t) noexcept;
@@ -420,6 +433,7 @@ private:
             void invalidate_handle(size_t) noexcept;
             void refresh_handle(size_t) noexcept;
             size_t get_free_handle_data_index();
+            void clear() noexcept;
 
             std::vector<handle_data> handle_datas{};
             size_t free_handle_data_index = std::numeric_limits<size_t>::max();
@@ -563,19 +577,31 @@ public:
     template<Table T> requires (is_in_db(^^T))
     inline static T::index push_back() noexcept
     {
-        return std::get<index_of_table(^^T)>(m_tables).push_back(T::default_row);
+        return std::get<index_of_table(^^T)>(m_tables).push_back();
     }
 
     template<TableRow R, Table T = typename [:table_from(^^R):]> requires (is_in_db(^^T))
-    inline static T::index push_back(const R& r = T::default_row) noexcept
+    inline static T::index push_back(const R& r) noexcept
     {
         return std::get<index_of_table(^^T)>(m_tables).push_back(r);
     }
 
     template<TableRow R, Table T = typename [:table_from(^^R):]> requires (is_in_db(^^T))
-    inline static T::index set(R&& r) noexcept
+    inline static T::index push_back(R&& r) noexcept
     {
         return std::get<index_of_table(^^T)>(m_tables).push_back(std::move(r));
+    }
+
+    template<Table T> requires (is_in_db(^^T))
+    inline static T::index append(size_t n) noexcept
+    {
+        return std::get<index_of_table(^^T)>(m_tables).append(n);
+    }
+
+    template<TableRow R, Table T = typename [:table_from(^^R):]> requires (is_in_db(^^T))
+    inline static T::index append(size_t n, const R& r) noexcept
+    {
+        return std::get<index_of_table(^^T)>(m_tables).append(n, r);
     }
 
     template<TableSheet S, Table T = typename [:table_from(^^S):]> requires (is_in_db(^^T))
@@ -645,6 +671,24 @@ public:
                        std::get<I>(m_tables).template iterate<S>(std::move(func));
                 }
             }
+    }
+
+    template<Table T> requires (is_in_db(^^T))
+    inline static void reserve(size_t new_capacity) noexcept
+    {
+        std::get<index_of_table(^^T)>(m_tables).reserve(new_capacity);
+    }
+
+    template<Table T> requires (is_in_db(^^T))
+    inline static void clear() noexcept
+    {
+        std::get<index_of_table(^^T)>(m_tables).clear();
+    }
+
+    inline static void clear_all() noexcept
+    {
+        template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
+            std::get<i>(m_tables).clear();
     }
 
 private:
