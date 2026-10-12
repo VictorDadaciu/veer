@@ -267,7 +267,7 @@ int main()
 {
     ve::log::init("arena", ve::log::level::debug);  
 
-    if (true) run_db();
+    if (false) run_db();
     else run_gfx();
     
     return 0;

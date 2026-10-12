@@ -27,7 +27,13 @@ error_code window::open(c_string name, size_t width, size_t height)
     if (!vk)
         return error(error_code::initialization, "Failed to create SDL window");
 
-    if (!SDL_SetWindowRelativeMouseMode(vk, true))
+    SDL_Rect rect = {
+        .x = 0,
+        .y = 0,
+        .w = static_cast<int>(width),
+        .h = static_cast<int>(height)
+    };
+    if (!SDL_SetWindowRelativeMouseMode(vk, true) && !SDL_SetWindowMouseRect(vk, &rect))
         warn("Failed to capture mouse");
     
     SAFE_JUST_INIT(surface, this);
