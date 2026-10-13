@@ -213,13 +213,32 @@ consteval bool table<TableDescriptors...>::matches_labels(meta_infos labels)
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+consteval bool table<TableDescriptors...>::contains_labels(meta_infos labels)
+{
+    for (meta_info label : labels)
+        if (is_label_of(label))
+            return true;
+    return false;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
 template<Selection S>
 constexpr bool table<TableDescriptors...>::matches() noexcept
 {
-    using Ps = S::properties_list;
     using Ls = S::labels_list;
+    using Ps = S::properties_list;
     return matches_labels(std::meta::template_arguments_of(std::meta::dealias(^^Ls))) &&
         get_selection_indices(std::meta::template_arguments_of(std::meta::dealias(^^Ps))) != ^^null_type;
+}
+
+template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
+template<Selection S>
+constexpr bool table<TableDescriptors...>::contains() noexcept
+{
+    using Ls = S::labels_list;
+    using Ps = S::properties_list;
+    return !contains_labels(std::meta::template_arguments_of(std::meta::dealias(^^Ls))) &&
+        get_selection_indices(std::meta::template_arguments_of(std::meta::dealias(^^Ps))) == ^^null_type;
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)

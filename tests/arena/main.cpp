@@ -139,8 +139,10 @@ void initialize_db()
     load_shader();
     // TODO: export with +z forward
     load_asset("tests/assets/dog.ktx2");
-    load_asset("tests/assets/box.glb");
     load_asset("tests/assets/cone.glb");
+    load_asset("tests/assets/box.glb");
+    load_asset("tests/assets/bench.glb");
+    db::reserve<objects>(9zu);
     for (int i = 0; i < 3; ++i)
     {
         objects::row row{};
@@ -156,6 +158,15 @@ void initialize_db()
         row.cell<position3>() = glm::vec3(4.5f * i, 0, 0);
         row.cell<tex_i>() = 0;
         row.cell<mesh_i>() = 1;
+        row.cell<shader_i>() = 0;
+        db::push_back(row);
+    }
+    for (size_t i = 0; i < 3; ++i)
+    {
+        objects::row row{};
+        row.cell<position3>() = glm::vec3(4.5f * i + 13.5f, 0, 0);
+        row.cell<tex_i>() = 0;
+        row.cell<mesh_i>() = 2;
         row.cell<shader_i>() = 0;
         db::push_back(row);
     }

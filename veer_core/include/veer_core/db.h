@@ -178,6 +178,7 @@ private:
     static consteval bool is_property_of(meta_info r) { return flat_property_index(r) < properties_array.size(); }
     static consteval bool is_label_of(meta_info);
     static consteval bool matches_labels(meta_infos);
+    static consteval bool contains_labels(meta_infos);
 
     static consteval meta_info underlying_type_of(meta_info r) { return template_arguments_of(property_impls_array[flat_property_index(r)])[1]; }
     static consteval meta_info get_selection_indices(meta_infos);
@@ -217,6 +218,7 @@ public:
     template<Label L> static constexpr bool is_label_of() noexcept { return is_label_of(^^L); }
     template<Property P> static constexpr property_location property_location_of() noexcept { return property_location_from_flat_index(flat_property_index(^^P)); }
     template<Selection S> static constexpr bool matches() noexcept;
+    template<Selection S> static constexpr bool contains() noexcept;
 
     VEER_STRONG_TYPEDEF(size_t, index);
 
@@ -673,6 +675,22 @@ public:
             }
     }
 
+    template<Selection S, Selection N, typename Func>
+    inline static void iterate(Func&& func)
+    {
+        if constexpr (S::count == 0 && N::count == 0)
+            iterate(std::move(func));
+        else if constexpr (N::count == 0)
+            iterate<S>(std::move(func));
+        else
+            template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
+            {
+                static constexpr meta_info table = tables_array[i];
+                if constexpr ([:table:]::template matches<S>() && ![:table:]::template contains<N>())
+                    std::get<i>(m_tables).template iterate<S>(std::move(func));
+            }
+    }
+
     template<Table T> requires (is_in_db(^^T))
     inline static void reserve(size_t new_capacity) noexcept
     {
@@ -716,6 +734,7 @@ struct name : public base                                    \
 #define VEER_COLUMN_IMPL_AS(prop, underlying) VEER_PACKED_COLUMN(VEER_IMPL_AS(prop, underlying))
 
 #define VEER_SELECT(...)  ve::select<__VA_ARGS__>
+#define VEER_NEGATE(...)  ve::select<__VA_ARGS__>
 #define VEER_FROM(...)    ve::from<__VA_ARGS__>
 
 #define VEER_IF_DECLTYPE_IS(auto_var, type) if constexpr (std::meta::dealias(std::meta::remove_cvref(^^decltype(auto_var))) == ^^type)
@@ -739,6 +758,7 @@ struct name : public base                                    \
 #define COLUMN_IMPL_AS              VEER_COLUMN_IMPL_AS
 
 #define SELECT                      VEER_SELECT
+#define NEGATE                      VEER_NEGATE
 #define FROM                        VEER_FROM
 
 #define PARAM_TYPE                  VEER_PARAM_TYPE
