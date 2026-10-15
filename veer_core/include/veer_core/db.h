@@ -27,6 +27,7 @@ struct typelist { static constexpr size_t count = sizeof...(Ts); };
 
 consteval bool has_physical_size(meta_info);
 consteval bool is_template_of(meta_info, meta_info);
+consteval bool is_in_types(meta_info, meta_infos);
 consteval bool is_label(meta_info);
 consteval bool is_property(meta_info);
 consteval bool is_in_property_tree(meta_info);
@@ -125,17 +126,17 @@ template<typename T>
 concept TableDescriptor = PackedColumn<T> || PaddedColumn<T> || Label<T>;
 
 template<QueryDescriptor... QueryDescriptors>
-struct select;
+struct query_base;
 
 template<>
-struct select<>
+struct query_base<>
 {
     using properties_list = typelist<>;
     using labels_list = typelist<>;
 };
 
 template<QueryDescriptor... QueryDescriptors>
-struct select : public typelist<QueryDescriptors...>
+struct query_base : public typelist<QueryDescriptors...>
 { 
 private:
     static constexpr auto properties_array = std::define_static_array(get_properties(std::vector{^^QueryDescriptors...}));
@@ -145,8 +146,24 @@ public:
     using properties_list = [:substitute(^^typelist, properties_array):];
     using labels_list = [:substitute(^^typelist, labels_array):];
 };
+
+template<QueryDescriptor... QueryDescriptors>
+struct select : query_base<QueryDescriptors...>
+{
+    using query_base<QueryDescriptors...>::properties_list;
+    using query_base<QueryDescriptors...>::labels_list;
+};
 template<typename T>
 concept Selection = is_template_of(^^T, ^^select);
+
+template<QueryDescriptor... QueryDescriptors>
+struct dont_select : query_base<QueryDescriptors...>
+{
+    using query_base<QueryDescriptors...>::properties_list;
+    using query_base<QueryDescriptors...>::labels_list;
+};
+template<typename T>
+concept DontSelect = is_template_of(^^T, ^^dont_select);
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
 struct table;
@@ -448,8 +465,12 @@ private:
 
 template<Table... Tables>
 struct from : public typelist<Tables...> {};
+template<Table... Tables>
+struct not_from : public typelist<Tables...> {};
 template<typename T>
 concept From = is_template_of(^^T, ^^from);
+template<typename T>
+concept NotFrom = is_template_of(^^T, ^^not_from);
 
 template<typename T>
 concept TableIndex = is_nested_in(^^T, ^^table) && (std::meta::identifier_of(^^T) == "index");
@@ -639,6 +660,38 @@ public:
             }
     }
 
+    template<DontSelect N, typename Func>
+    inline static void iterate(Func&& func)
+    {
+        if constexpr (N::count == 0)
+            iterate(std::move(func));
+        else
+            template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
+            {
+                static constexpr meta_info table = tables_array[i];
+                if constexpr (![:table:]::template contains<N>())
+                    std::get<i>(m_tables).iterate(std::move(func));
+            }
+    }
+
+    template<Selection S, DontSelect N, typename Func>
+    inline static void iterate(Func&& func)
+    {
+        if constexpr (S::count == 0 && N::count == 0)
+            iterate(std::move(func));
+        else if constexpr (N::count == 0)
+            iterate<S>(std::move(func));
+        else if constexpr (S::count == 0)
+            iterate<N>(std::move(func));
+        else
+            template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
+            {
+                static constexpr meta_info table = tables_array[i];
+                if constexpr ([:table:]::template matches<S>() && ![:table:]::template contains<N>())
+                    std::get<i>(m_tables).template iterate<S>(std::move(func));
+            }
+    }
+
     template<From F, typename Func>
     inline static void iterate(Func&& func)
     {
@@ -651,6 +704,17 @@ public:
                 if constexpr (I < tables_array.size())
                     std::get<I>(m_tables).iterate(std::move(func));
             }
+    }
+
+    template<NotFrom F, typename Func>
+    inline static void iterate(Func&& func)
+    {
+        if constexpr (F::count == 0)
+            iterate(std::move(func));
+        else
+            template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
+                if constexpr (!is_in_types(tables_array[i], template_arguments_of(^^F)))
+                    std::get<i>(m_tables).iterate(std::move(func));
     }
 
     template<Selection S, From F, typename Func>
@@ -675,20 +739,69 @@ public:
             }
     }
 
-    template<Selection S, Selection N, typename Func>
+    template<Selection S, NotFrom F, typename Func>
     inline static void iterate(Func&& func)
     {
-        if constexpr (S::count == 0 && N::count == 0)
+        if constexpr (S::count == 0 && F::count == 0)
             iterate(std::move(func));
-        else if constexpr (N::count == 0)
+        else if constexpr (F::count == 0)
             iterate<S>(std::move(func));
+        else if constexpr (S::count == 0)
+            iterate<F>(std::move(func));
         else
             template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
-            {
-                static constexpr meta_info table = tables_array[i];
-                if constexpr ([:table:]::template matches<S>() && ![:table:]::template contains<N>())
-                    std::get<i>(m_tables).template iterate<S>(std::move(func));
-            }
+                if constexpr (!is_in_types(tables_array[i], template_arguments_of(^^F)))
+                {
+                    static constexpr meta_info table = tables_array[i];
+                    if constexpr ([:table:]::template matches<S>())
+                        std::get<i>(m_tables).template iterate<S>(std::move(func));
+                }
+    }
+
+    template<DontSelect N, NotFrom F, typename Func>
+    inline static void iterate(Func&& func)
+    {
+        if constexpr (N::count == 0 && F::count == 0)
+            iterate(std::move(func));
+        else if constexpr (F::count == 0)
+            iterate<N>(std::move(func));
+        else if constexpr (N::count == 0)
+            iterate<F>(std::move(func));
+        else
+            template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
+                if constexpr (!is_in_types(tables_array[i], template_arguments_of(^^F)))
+                {
+                    static constexpr meta_info table = tables_array[i];
+                    if constexpr (![:table:]::template contains<N>())
+                       std::get<i>(m_tables).iterate(std::move(func));
+                }
+    }
+
+    template<Selection S, DontSelect N, NotFrom F, typename Func>
+    inline static void iterate(Func&& func)
+    {
+        if constexpr (S::count == 0 && N::count == 0 && F::count == 0)
+            iterate(std::move(func));
+        else if constexpr (N::count == 0 && F::count == 0)
+            iterate<S>(std::move(func));
+        else if constexpr (S::count == 0 && F::count == 0)
+            iterate<N>(std::move(func));
+        else if constexpr (S::count == 0 && N::count == 0)
+            iterate<F>(std::move(func));
+        else if constexpr (F::count == 0)
+            iterate<S, N>(std::move(func));
+        else if constexpr (N::count == 0)
+            iterate<S, F>(std::move(func));
+        else if constexpr (S::count == 0)
+            iterate<N, F>(std::move(func));
+        else
+            template for (constexpr size_t i : std::views::iota(0zu, tables_array.size()))
+                if constexpr (!is_in_types(tables_array[i], template_arguments_of(^^F)))
+                {
+                    static constexpr meta_info table = tables_array[i];
+                    if constexpr ([:table:]::template matches<S>() && ![:table:]::template contains<N>())
+                       std::get<i>(m_tables).template iterate<S>(std::move(func));
+                }
     }
 
     template<Table T> requires (is_in_db(^^T))
@@ -733,9 +846,10 @@ struct name : public base                                    \
 #define VEER_COLUMN_IMPL(prop) VEER_PACKED_COLUMN(VEER_IMPL(prop))
 #define VEER_COLUMN_IMPL_AS(prop, underlying) VEER_PACKED_COLUMN(VEER_IMPL_AS(prop, underlying))
 
-#define VEER_SELECT(...)  ve::select<__VA_ARGS__>
-#define VEER_NEGATE(...)  ve::select<__VA_ARGS__>
-#define VEER_FROM(...)    ve::from<__VA_ARGS__>
+#define VEER_SELECT(...)        ve::select<__VA_ARGS__>
+#define VEER_DONT_SELECT(...)   ve::dont_select<__VA_ARGS__>
+#define VEER_FROM(...)          ve::from<__VA_ARGS__>
+#define VEER_NOT_FROM(...)      ve::not_from<__VA_ARGS__>
 
 #define VEER_IF_DECLTYPE_IS(auto_var, type) if constexpr (std::meta::dealias(std::meta::remove_cvref(^^decltype(auto_var))) == ^^type)
 #define VEER_ELSE_IF_DECLTYPE_IS(auto_var, type) else VEER_IF_DECLTYPE_IS(auto_var, type)
@@ -758,8 +872,9 @@ struct name : public base                                    \
 #define COLUMN_IMPL_AS              VEER_COLUMN_IMPL_AS
 
 #define SELECT                      VEER_SELECT
-#define NEGATE                      VEER_NEGATE
+#define DONT_SELECT                 VEER_DONT_SELECT
 #define FROM                        VEER_FROM
+#define NOT_FROM                        VEER_NOT_FROM
 
 #define PARAM_TYPE                  VEER_PARAM_TYPE
 #define IF_DECLTYPE_IS              VEER_IF_DECLTYPE_IS

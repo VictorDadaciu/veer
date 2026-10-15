@@ -9,6 +9,14 @@ consteval bool has_physical_size(meta_info r)
     return is_arithmetic_type(r) || nonstatic_data_members_of(r, std::meta::access_context::unchecked()).size() > 0;
 }
 
+consteval bool is_in_types(meta_info type, meta_infos list)
+{
+    for (meta_info r : list)
+        if (type == r)
+            return true;
+    return false;
+}
+
 consteval bool is_template_of(meta_info type, meta_info tmpl)
 {
     return has_template_arguments(type) && template_of(type) == tmpl;
