@@ -100,10 +100,12 @@ error_code gltf_model_wrapper::initialize_mesh(ve::mesh& new_mesh, size_t mesh_i
                 .buffer_view_index = buffer_index,
                 .byte_offset = buffer_view.byte_offset + accessor.byte_offset,
                 .element_count = accessor.count,
-                .stride = buffer_view.byte_stride,
-                .component_size = static_cast<uint8_t>(tg3_component_size(accessor.component_type)),
-                .component_count = static_cast<uint8_t>(tg3_num_components(accessor.type)),
-                .is_floating_point = accessor.type >= TG3_COMPONENT_TYPE_FLOAT,
+                .stride = static_cast<uint8_t>(buffer_view.byte_stride),
+                .comp{
+                    .size_exp = static_cast<uint8_t>(std::log2(tg3_component_size(accessor.component_type))), // TODO: there is a better way to do this in this case, bit math
+                    .count = static_cast<uint8_t>(tg3_num_components(accessor.type)),
+                    .integral = accessor.type < TG3_COMPONENT_TYPE_FLOAT,
+                }
             };
         }
         if (primitive_spec.indices == -1)
@@ -118,9 +120,11 @@ error_code gltf_model_wrapper::initialize_mesh(ve::mesh& new_mesh, size_t mesh_i
             .buffer_view_index = buffer_index,
             .byte_offset = buffer_view.byte_offset + accessor.byte_offset,
             .element_count = accessor.count,
-            .component_size = static_cast<uint8_t>(tg3_component_size(accessor.component_type)),
-            .component_count = 1,
-            .is_floating_point = false,
+            .comp{
+                .size_exp = static_cast<uint8_t>(std::log2(tg3_component_size(accessor.component_type))),
+                .count = static_cast<uint8_t>(tg3_num_components(accessor.type)),
+                .integral = accessor.type < TG3_COMPONENT_TYPE_FLOAT,
+            }
         };
     }
     allocate_and_copy(new_mesh);

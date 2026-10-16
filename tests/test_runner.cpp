@@ -7,5 +7,6 @@ int main()
     db_tests().run();
     bits_tests().run();
     utils_tests().run();
+
     return 0;
 }

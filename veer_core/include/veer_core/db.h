@@ -42,6 +42,8 @@ consteval meta_infos get_properties(auto);
 consteval meta_infos get_labels(auto);
 consteval meta_infos get_property_impls_from_columns(auto);
 consteval meta_infos get_properties_from_property_impls(auto);
+consteval meta_infos get_sorted_properties(auto);
+consteval meta_infos get_unsorted_properties(auto);
 consteval meta_infos make_pointers(auto);
 
 struct label_root {};
@@ -51,6 +53,9 @@ concept Label = is_label(^^T);
 template<typename T>
 concept PhysicalData = std::is_default_constructible_v<T> && std::movable<T> && has_physical_size(^^T) && !is_in_property_tree(^^T) && !Label<T>;
 template<typename T>
+concept Sortable = PhysicalData<T> && requires (T a, T b) { a < b; };
+
+template<typename T>
 concept Property = is_property(^^T);
 
 template<PhysicalData T>
@@ -58,6 +63,7 @@ struct property_root
 {
     using target_type = T;
     using property_root_type = property_root<T>;
+    static constexpr bool is_sorted = false;
 };
 template<typename T>
 concept PropertyRoot = is_template_of(^^T, ^^property_root);
@@ -68,10 +74,12 @@ concept PropertyBranch = Property<T> || PropertyRoot<T>;
 template<PropertyBranch P, PhysicalData U=P::target_type>
 struct property_impl final
 {
+    static constexpr bool is_sorted = P::is_sorted;
     using target_type = P::target_type;
     using property_root_type = P::property_root_type;
     using property_type = P;
     using underlying_type = U;
+    static_assert(!is_sorted || Sortable<underlying_type>);
 
     U value{};
 
@@ -173,6 +181,31 @@ concept Table = is_template_of(^^T, ^^table);
 template<Table... Tables> requires (sizeof...(Tables) > 0)
 class database;
 
+class handle
+{
+    size_t data_index = std::numeric_limits<size_t>::max();
+    size_t generation = std::numeric_limits<size_t>::max();
+
+public:
+    friend bool operator<(const handle&, const handle&) noexcept;
+    friend bool operator<=(const handle&, const handle&) noexcept;
+    friend bool operator==(const handle&, const handle&) noexcept;
+    friend bool operator!=(const handle&, const handle&) noexcept;
+    friend bool operator>=(const handle&, const handle&) noexcept;
+    friend bool operator>(const handle&, const handle&) noexcept;
+    friend std::strong_ordering operator<=>(const handle&, const handle&) noexcept;
+};
+inline bool operator<(const handle& a, const handle& b) noexcept { return a.data_index < b.data_index; }
+inline bool operator<=(const handle& a, const handle& b) noexcept { return a.data_index <= b.data_index; }
+inline bool operator==(const handle& a, const handle& b) noexcept { return a.data_index == b.data_index; }
+inline bool operator!=(const handle& a, const handle& b) noexcept { return a.data_index != b.data_index; }
+inline bool operator>=(const handle& a, const handle& b) noexcept { return a.data_index >= b.data_index; }
+inline bool operator>(const handle& a, const handle& b) noexcept { return a.data_index > b.data_index; }
+inline std::strong_ordering operator<=>(const handle& a, const handle& b) noexcept { return a.data_index <=> b.data_index; }
+
+template <class T>
+concept Handle = std::is_same_v<T, handle>;
+
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
 struct table
 {
@@ -184,6 +217,8 @@ private:
     static constexpr auto columns_array = std::define_static_array(get_columns(descriptor_array));
     static constexpr auto property_impls_array = std::define_static_array(get_property_impls_from_columns(columns_array));
     static constexpr auto properties_array = std::define_static_array(get_properties_from_property_impls(property_impls_array));
+    static constexpr auto sorted_properties_array = std::define_static_array(get_sorted_properties(properties_array));
+    static constexpr auto unsorted_properties_array = std::define_static_array(get_unsorted_properties(properties_array));
     static constexpr auto labels_array = std::define_static_array(get_labels(descriptor_array));
 
     struct property_location
@@ -210,15 +245,11 @@ private:
     };
 
 public:
-    class handle final
-    {
-        size_t data_index = std::numeric_limits<size_t>::max();
-        size_t generation = std::numeric_limits<size_t>::max();
-    };
-
     using columns_list = [:substitute(^^typelist, columns_array):];
     static_assert(columns_list::count > 0, "Table must have at least one column!");
     using properties_list = [:substitute(^^typelist, properties_array):];
+    using sorted_properties_list = [:substitute(^^typelist, sorted_properties_array):];
+    using unsorted_properties_list = [:substitute(^^typelist, unsorted_properties_array):];
     using labels_list = [:substitute(^^typelist, labels_array):];
 
     class sheet;
@@ -245,12 +276,13 @@ public:
         friend class db_sheet;
 
     public:
-        template<Property P> requires (is_property_of(^^P))
+        template<Property P> requires (is_property_of(^^P) && !P::is_sorted)
         auto& cell() noexcept
         {
             static constexpr auto [column_index, internal_index] = property_location_of<P>();
             return std::get<internal_index>(std::get<column_index>(m_cols)).value;
         }
+
         template<Property P> requires (is_property_of(^^P))
         const auto& cell() const noexcept
         {
@@ -291,7 +323,7 @@ public:
         size_t capacity() const noexcept { return m_capacity; }
         size_t count() const noexcept { return m_count; }
 
-        template<Property P> requires (is_property_of<P>())
+        template<Property P> requires (is_property_of<P>() && !P::is_sorted)
         auto& cell(size_t i) noexcept
         {
             assert(i < m_count);
@@ -475,8 +507,6 @@ concept NotFrom = is_template_of(^^T, ^^not_from);
 template<typename T>
 concept TableIndex = is_nested_in(^^T, ^^table) && (std::meta::identifier_of(^^T) == "index");
 template<typename T>
-concept TableHandle = is_nested_in(^^T, ^^table) && (std::meta::identifier_of(^^T) == "handle");
-template<typename T>
 concept TableRow = is_nested_in(^^T, ^^table) && (std::meta::identifier_of(^^T) == "row");
 template<typename T>
 concept TableSheet = is_nested_in(^^T, ^^table) && (std::meta::identifier_of(^^T) == "sheet");
@@ -531,7 +561,7 @@ public:
         std::get<index_of_table(^^T)>(m_tables).vacuum();
     }
 
-    template<TableHandle H, Table T = typename [:table_from(^^H):]> requires (is_in_db(^^T))
+    template<Table T, Handle H> requires (is_in_db(^^T))
     inline static bool handle_valid(H h) noexcept
     {
         return std::get<index_of_table(^^T)>(m_tables).handle_valid(h);
@@ -543,7 +573,7 @@ public:
         return std::get<index_of_table(^^T)>(m_tables).handle_from(i);
     }
 
-    template<TableHandle H, Table T = typename [:table_from(^^H):]> requires (is_in_db(^^T))
+    template<Table T, Handle H> requires (is_in_db(^^T))
     inline static T::index index_from(H h) noexcept
     {
         return std::get<index_of_table(^^T)>(m_tables).index_from(h);
@@ -827,14 +857,19 @@ private:
 };
 }
 
-#define VEER_DERIVE_PROP(name, base)                                    \
-struct name : public base                                    \
-{                                                                       \
-    static_assert(ve::PropertyBranch<base>);                 \
-    using target_type = base::target_type;                   \
-    using property_root_type = base::property_root_type;     \
-    using property_type = name;                                         \
+#define _VEER_DERIVE_PROP_COMMON(name, base, sort)              \
+struct name : public base                                       \
+{                                                               \
+    static_assert(ve::PropertyBranch<base>);                    \
+    static constexpr bool is_sorted = sort;                     \
+    using target_type = base::target_type;                      \
+    using property_root_type = base::property_root_type;        \
+    using property_type = name;                                 \
 }
+
+#define VEER_DERIVE_PROP(name, base) _VEER_DERIVE_PROP_COMMON(name, base, base::is_sorted)
+
+#define VEER_DERIVE_SORTED_PROP(name, base) _VEER_DERIVE_PROP_COMMON(name, base, true)
 
 #define VEER_TABLE(...) ve::table<__VA_ARGS__>
 
@@ -882,6 +917,7 @@ struct name : public base                                    \
 
 #define PROPERTY_ROOT               VEER_PROPERTY_ROOT
 #define DERIVE_PROP                 VEER_DERIVE_PROP
+#define DERIVE_SORTED_PROP          VEER_DERIVE_SORTED_PROP
 #define DECLARE_LABEL               VEER_DECLARE_LABEL
 #endif
 

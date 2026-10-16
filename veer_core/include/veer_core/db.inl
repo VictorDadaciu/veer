@@ -6,7 +6,16 @@ namespace ve
 {
 consteval bool has_physical_size(meta_info r)
 {
-    return is_arithmetic_type(r) || nonstatic_data_members_of(r, std::meta::access_context::unchecked()).size() > 0;
+    if (is_arithmetic_type(r) || is_enum_type(r) || is_scoped_enum_type(r) || nonstatic_data_members_of(r, std::meta::access_context::unchecked()).size() > 0)
+        return true;
+    do {
+        r = base_of(r);
+        if (r == ^^null_type)
+            return false;
+        else if (nonstatic_data_members_of(r, std::meta::access_context::unchecked()).size() > 0)
+            return true;
+    } while(true);
+    return false;
 }
 
 consteval bool is_in_types(meta_info type, meta_infos list)
@@ -74,7 +83,7 @@ consteval bool is_nested_in(meta_info nested, meta_info nest)
 
 consteval meta_info base_of(meta_info r, size_t index)
 {
-    if (is_fundamental_type(r))
+    if (is_fundamental_type(r) || is_enum_type(r) || is_scoped_enum_type(r))
         return ^^null_type;
     auto bases = bases_of(r, std::meta::access_context::unchecked());
     return (index < bases.size() ? type_of(bases[index]) : ^^null_type);
@@ -132,6 +141,36 @@ consteval meta_infos get_properties_from_property_impls(auto prop_impls)
     for (auto prop_impl : prop_impls)
         properties.push_back(template_arguments_of(prop_impl)[0]);
     return properties;
+}
+
+namespace
+{
+consteval meta_infos filter_on_sort(auto props, bool sorted)
+{
+    meta_infos ret;
+    for (auto prop : props)
+    {
+        for (meta_info data_member : static_data_members_of(prop, std::meta::access_context::unchecked()))
+        {
+            if (identifier_of(data_member) == "is_sorted" && extract<bool>(data_member) == sorted)
+            {
+                ret.push_back(prop);
+                break;
+            }
+        }
+    }
+    return ret;
+}
+}
+
+consteval meta_infos get_sorted_properties(auto props)
+{
+    return filter_on_sort(props, true);
+}
+
+consteval meta_infos get_unsorted_properties(auto props)
+{
+    return filter_on_sort(props, false);
 }
 
 consteval meta_infos make_pointers(auto columns_array)
@@ -626,17 +665,17 @@ void table<TableDescriptors...>::db_sheet::reserve(size_t new_capacity)
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-bool table<TableDescriptors...>::db_sheet::handle_valid(const table<TableDescriptors...>::handle& h) noexcept
+bool table<TableDescriptors...>::db_sheet::handle_valid(const handle& h) noexcept
 {
     assert(h.data_index < m_internal_data.handle_datas.size());
     return h.generation == m_internal_data.handle_datas[h.data_index].generation;
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-table<TableDescriptors...>::handle table<TableDescriptors...>::db_sheet::handle_from(size_t i)
+handle table<TableDescriptors...>::db_sheet::handle_from(size_t i)
 {
     assert(i < m_count);
-    table<TableDescriptors...>::handle ret;
+    handle ret;
     ret.data_index = m_internal_data.handle_data_indices[i];
     if (ret.data_index != std::numeric_limits<size_t>::max())
     {
@@ -653,7 +692,7 @@ table<TableDescriptors...>::handle table<TableDescriptors...>::db_sheet::handle_
 }
 
 template<TableDescriptor... TableDescriptors> requires (sizeof...(TableDescriptors) > 0)
-table<TableDescriptors...>::index table<TableDescriptors...>::db_sheet::index_from(const table<TableDescriptors...>::handle& h) noexcept
+table<TableDescriptors...>::index table<TableDescriptors...>::db_sheet::index_from(const handle& h) noexcept
 {
     assert(h.data_index < m_internal_data.handle_datas.size());
     return handle_valid(h) ?

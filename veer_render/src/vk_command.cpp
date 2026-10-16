@@ -120,7 +120,7 @@ void vk_command_buffer::draw_mesh(const mesh& m, size_t instances)
         if (primitive.is_indexed())
         {
             auto& index_view = primitive.index_attribute_view;
-            vkCmdBindIndexBuffer(vk, m, index_view.byte_offset, as_index_type(index_view.component_size));
+            vkCmdBindIndexBuffer(vk, m, index_view.byte_offset, index_view.comp.index_type());
             vkCmdDrawIndexed(vk, index_view.element_count, instances, 0, 0, 0);
         }
         else
