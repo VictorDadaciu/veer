@@ -2,9 +2,10 @@
 
 #include "inputs.h"
 
-#include <veer_core/db.h>
 #include <veer_core/error_code.h>
 #include <veer_core/utils.h>
+
+#include <vql/db.h>
 
 #include <flat_map>
 
@@ -36,7 +37,7 @@ using buttons = TABLE(
     COLUMN_IMPL(double_press_duration_p)
 );
 
-using input_db = database<buttons>;
+using input_db = vql::database<buttons>;
 
 keycode SDL_keycode_to_veer_keycode(size_t);
 mouse_button SDL_mouse_button_to_veer_mouse_button(size_t);

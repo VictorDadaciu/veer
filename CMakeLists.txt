@@ -64,6 +64,9 @@ if (${VEER_INSTALL})
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/veerConfig.cmake"
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/veer/cmake
     )
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/vql/vql
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/veer/extern
+    )
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/glm/glm
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/veer/extern
     )

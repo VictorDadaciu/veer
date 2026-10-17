@@ -5,13 +5,10 @@ set(VEER_CORE_SOURCES
     src/log.cpp
     src/math_utils.cpp
     src/timing.cpp
-    src/utils.cpp
 )
 
 set(VEER_CORE_HEADERS
     include/veer_core/bits.h
-    include/veer_core/db.h
-    include/veer_core/db.inl
     include/veer_core/error_code.h
     include/veer_core/file.h
     include/veer_core/log.h

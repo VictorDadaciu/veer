@@ -7,12 +7,13 @@ add_executable(unit_tests test_runner.cpp)
 target_include_directories(
     unit_tests
     PRIVATE
-        ../extern/cppunit   
+        ../extern/cppunit
 )
 
 target_link_libraries(
     unit_tests
     PRIVATE
+        vql
         veer
 )
 

@@ -17,3 +17,6 @@
 [submodule "extern/cppunit"]
 	path = extern/cppunit
 	url = https://github.com/cppunit/cppunit
+[submodule "extern/vql"]
+	path = extern/vql
+	url = git@github.com:VictorDadaciu/vql.git

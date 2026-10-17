@@ -66,6 +66,7 @@ target_include_directories(veer_render
     PRIVATE
         ../extern
         ../extern/vma/include
+        ../extern/vql
 )
 
 target_link_libraries(

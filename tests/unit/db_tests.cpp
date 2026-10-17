@@ -1,7 +1,8 @@
 #include <cppunit.h>
 
-#include <veer_core/db.h>
 #include <veer_core/utils.h>
+
+#include <vql/db.h>
 
 #include <cstdlib>
 #include <memory>
@@ -52,7 +53,7 @@ using table3 = TABLE(
     COLUMN_IMPL(ptr_p)
 );
 
-using db = ve::database<table1, table2, table3>;
+using db = vql::database<table1, table2, table3>;
 
 struct db_tests : public Cppunit
 {

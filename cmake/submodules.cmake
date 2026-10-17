@@ -40,8 +40,8 @@ set(SDL_SHARED OFF)
 set(SDL_TEST_LIBRARY OFF)
 set(SDL_TESTS OFF)
 set(SDL_IBUS OFF)
-set(SDL_X11 ON)
-set(SDL_WAYLAND OFF)
+set(SDL_X11 OFF)
+set(SDL_WAYLAND ON)
 add_subdirectory(extern/SDL3 EXCLUDE_FROM_ALL)
 
 set(GLM_ENABLE_CXX_20 ON)
@@ -54,3 +54,6 @@ add_subdirectory(extern/ktx/lib ktx EXCLUDE_FROM_ALL)
 
 add_subdirectory(extern/vma EXCLUDE_FROM_ALL)
 add_subdirectory(extern/tinygltf EXCLUDE_FROM_ALL)
+
+set(VQL_TESTS OFF)
+add_subdirectory(extern/vql EXCLUDE_FROM_ALL)

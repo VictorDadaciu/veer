@@ -7,24 +7,6 @@ namespace ve
 {
 using c_string = const char*;
 
-static constexpr size_t cache_line_size = 64;
-constexpr size_t next_multiple_of_cache_line_size(size_t x)
-{
-    return (x + cache_line_size - 1) & -cache_line_size;
-}
-
-constexpr size_t next_power_of_2(size_t x)
-{
-    --x;
-    x |= x >> 1;
-    x |= x >> 2;
-    x |= x >> 4;
-    x |= x >> 8;
-    x |= x >> 16;
-    x |= x >> 32;
-    return ++x;
-}
-
 template<int exponent, std::floating_point underlying_t=float>
 struct tolerance_t
 {
@@ -33,23 +15,10 @@ struct tolerance_t
 template<int exponent, std::floating_point underlying_t=float>
 static constexpr underlying_t tolerance = tolerance_t<exponent, underlying_t>::value;
 
-
 template<std::floating_point f1_t, std::floating_point f2_t, std::floating_point bigger_t = std::conditional_t<(sizeof(f1_t) >= sizeof(f2_t)), f1_t, f2_t>>
 inline constexpr bool fuzzy_eq(f1_t a, f2_t b, bigger_t tol = tolerance<-6, bigger_t>)
 {
     return std::abs(a - b) <= tol;
-}
-
-struct alignas(cache_line_size) cache_aligned_bytes
-{
-    std::array<std::byte, cache_line_size> bytes{};
-};
-
-std::byte* allocate_cache_aligned_bytes(size_t);
-
-inline decltype(auto) allocate_smart_cache_aligned_bytes(size_t byte_size)
-{
-    return std::make_unique<cache_aligned_bytes[]>(byte_size / cache_line_size);
 }
 
 struct byte_span

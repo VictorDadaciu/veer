@@ -1,7 +1,5 @@
 #pragma once
 
-#include <veer_core/db.h>
-
 #include "vk_buffer.h"
 
 #include <cassert>
@@ -109,66 +107,4 @@ public:
     std::vector<offset_span> buffer_views{};
     std::string name{};
 };
-
-VEER_DERIVE_SORTED_PROP(attribute_view_handle_p,   VEER_PROPERTY_ROOT(handle));
-VEER_DERIVE_SORTED_PROP(mesh_primitive_handle_p,   VEER_PROPERTY_ROOT(handle));
-VEER_DERIVE_SORTED_PROP(mesh_handle_p,             VEER_PROPERTY_ROOT(handle));
-
-VEER_DERIVE_PROP(byte_offset_p,         VEER_PROPERTY_ROOT(size_t));
-VEER_DERIVE_PROP(element_count_p,       VEER_PROPERTY_ROOT(size_t));
-
-VEER_DERIVE_PROP(buffer_view_index_p,   VEER_PROPERTY_ROOT(uint8_t));
-VEER_DERIVE_PROP(byte_stride_p,         VEER_PROPERTY_ROOT(uint8_t));
-
-VEER_DERIVE_PROP(component_metadata_p,  VEER_PROPERTY_ROOT(mesh_component_metadata));
-
-VEER_DERIVE_PROP(attribute_type_p,      VEER_PROPERTY_ROOT(attribute_type));
-
-using attribute_views_table = VEER_TABLE(
-    VEER_COLUMN_IMPL(mesh_primitive_handle_p),
-    VEER_PACKED_COLUMN(
-        VEER_IMPL(buffer_view_index_p),
-        VEER_IMPL(attribute_type_p)
-    ),
-    VEER_PACKED_COLUMN(
-        VEER_IMPL(byte_offset_p),
-        VEER_IMPL(element_count_p)
-    ),
-    VEER_PACKED_COLUMN(
-        VEER_IMPL(byte_stride_p),
-        VEER_IMPL(component_metadata_p)
-    )
-);
-
-VEER_DERIVE_PROP(mesh_index_p,              VEER_PROPERTY_ROOT(uint16_t));
-VEER_DERIVE_PROP(vertex_count_p,            VEER_PROPERTY_ROOT(size_t));
-
-VEER_DERIVE_PROP(render_mode_p,   VEER_PROPERTY_ROOT(render_mode));
-
-VEER_DERIVE_PROP(vk_buffer_p,       VEER_PROPERTY_ROOT(vk_buffer));
-
-VEER_DERIVE_PROP(buffer_views_p,    VEER_PROPERTY_ROOT(std::vector<offset_span>));
-
-VEER_DERIVE_PROP(mesh_name_p,       VEER_PROPERTY_ROOT(std::string));
-
-using mesh_primitives_table = VEER_TABLE(
-    VEER_COLUMN_IMPL(mesh_index_p),
-    VEER_COLUMN_IMPL(vertex_count_p),
-    VEER_COLUMN_IMPL(attribute_view_handle_p),
-    VEER_COLUMN_IMPL(mesh_handle_p),
-    VEER_COLUMN_IMPL(render_mode_p)
-);
-
-using mesh_table = VEER_TABLE(
-    VEER_COLUMN_IMPL(vk_buffer_p),
-    VEER_COLUMN_IMPL(buffer_views_p),
-    VEER_COLUMN_IMPL(mesh_primitive_handle_p),
-    VEER_COLUMN_IMPL(mesh_name_p)
-);
-
-using mesh_db = database<
-    attribute_views_table,
-    mesh_primitives_table,
-    mesh_table
->;
 }

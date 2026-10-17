@@ -10,6 +10,8 @@
 #include <veer_core/file.h>
 #include <veer_core/log.h>
 
+#include <vql/utils.h>
+
 namespace ve
 {
 error_code gltf_model_wrapper::load(const std::string& path)
@@ -41,7 +43,7 @@ size_t gltf_model_wrapper::get_buffer_and_update_buffers_if_needed(ve::mesh& new
         .offset = m_total_size,
         .size = exact_byte_length
     });
-    m_total_size += next_multiple_of_cache_line_size(exact_byte_length);
+    m_total_size += vql::next_multiple_of_cache_line_size(exact_byte_length);
     return m_buffer_indices_map.insert({buffer_index, m_buffer_indices_map.size()}).first->second;
 }
 
