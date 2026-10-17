@@ -1,4 +1,4 @@
-#include <veer_core/db.h>
+#include <vql/db.h>
 #include <veer_core/log.h>
 #include <veer_core/math_utils.h>
 
@@ -45,7 +45,7 @@ using objects = TABLE(
     COLUMN_IMPL_AS(shader_i, uint8_t)
 );
 
-using db = ve::database<
+using db = vql::database<
     defenders,
     attackers,
     objects

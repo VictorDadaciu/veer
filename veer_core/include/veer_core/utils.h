@@ -59,57 +59,7 @@ inline static x& get() noexcept \
     return instance;            \
 }
 
-#define VEER_STRONG_TYPEDEF(underlying, name)                              \
-class name final                                                           \
-{                                                                          \
-private:                                                                   \
-    underlying value;                                                      \
-public:                                                                    \
-    inline name() = default;                                               \
-    inline name(const name &x) = default;                                  \
-    inline name(name &&x) = default;                                       \
-    inline name &operator=(const name &rhs) = default;                     \
-    inline name &operator=(name &&rhs) = default;                          \
-    inline constexpr name(underlying x) noexcept : value{x} {}             \
-    inline constexpr name &operator=(underlying rhs) noexcept              \
-    {                                                                      \
-        value = rhs;                                                       \
-        return *this;                                                      \
-    }                                                                      \
-    inline constexpr operator const underlying &() const noexcept          \
-    {                                                                      \
-        return value;                                                      \
-    }                                                                      \
-    inline constexpr operator underlying &() noexcept { return value; }    \
-    inline constexpr decltype(auto) operator==(const name &rhs) noexcept   \
-    {                                                                      \
-        return value == rhs.value;                                         \
-    }                                                                      \
-    inline constexpr decltype(auto) operator!=(const name &rhs) noexcept   \
-    {                                                                      \
-        return value != rhs.value;                                         \
-    }                                                                      \
-    inline constexpr decltype(auto) operator<(const name &rhs) noexcept    \
-    {                                                                      \
-        return value < rhs.value;                                          \
-    }                                                                      \
-    inline constexpr decltype(auto) operator>(const name &rhs) noexcept    \
-    {                                                                      \
-        return value > rhs.value;                                          \
-    }                                                                      \
-    inline constexpr decltype(auto) operator<=(const name &rhs) noexcept   \
-    {                                                                      \
-        return value <= rhs.value;                                         \
-    }                                                                      \
-    inline constexpr decltype(auto) operator>=(const name &rhs) noexcept   \
-    {                                                                      \
-        return value >= rhs.value;                                         \
-    }                                                                      \
-}
-
 #ifndef VEER_DONT_STRIP_PREFIX
 #define DECLARE_NO_COPY_NO_MOVE VEER_DECLARE_NO_COPY_NO_MOVE
 #define DECLARE_NO_COPY         VEER_DECLARE_NO_COPY
-
-#define STRONG_TYPEDEF          VEER_STRONG_TYPEDEF
 #endif

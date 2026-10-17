@@ -1,26 +1,26 @@
 #include <cppunit.h>
 
-#include <veer_core/utils.h>
+#include <vql/utils.h>
 
 struct utils_tests : public Cppunit
 {
     void test_next_multiple_of_cache_line_size()
     {
-        CHECK(ve::next_multiple_of_cache_line_size(0), 0);
-        CHECK(ve::next_multiple_of_cache_line_size(1), 64);
-        CHECK(ve::next_multiple_of_cache_line_size(64), 64);
-        CHECK(ve::next_multiple_of_cache_line_size(65), 128);
-        CHECK(ve::next_multiple_of_cache_line_size(129), 192);
+        CHECK(vql::next_multiple_of_cache_line_size(0), 0);
+        CHECK(vql::next_multiple_of_cache_line_size(1), 64);
+        CHECK(vql::next_multiple_of_cache_line_size(64), 64);
+        CHECK(vql::next_multiple_of_cache_line_size(65), 128);
+        CHECK(vql::next_multiple_of_cache_line_size(129), 192);
     }
 
     void test_next_power_of_2()
     {
-        CHECK(ve::next_power_of_2(0), 0);
-        CHECK(ve::next_power_of_2(1), 1);
-        CHECK(ve::next_power_of_2(2), 2);
-        CHECK(ve::next_power_of_2(3), 4);
-        CHECK(ve::next_power_of_2(128), 128);
-        CHECK(ve::next_power_of_2(129), 256);
+        CHECK(vql::next_power_of_2(0), 0);
+        CHECK(vql::next_power_of_2(1), 1);
+        CHECK(vql::next_power_of_2(2), 2);
+        CHECK(vql::next_power_of_2(3), 4);
+        CHECK(vql::next_power_of_2(128), 128);
+        CHECK(vql::next_power_of_2(129), 256);
     }
 
     void test_fuzzy_eq()

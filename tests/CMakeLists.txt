@@ -8,6 +8,7 @@ target_include_directories(
     unit_tests
     PRIVATE
         ../extern/cppunit
+        ../extern/vql
 )
 
 target_link_libraries(

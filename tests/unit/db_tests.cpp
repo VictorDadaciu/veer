@@ -121,7 +121,7 @@ struct db_tests : public Cppunit
             CHECK(sheet.push_back(), i);
             size_t count = i + 1;
             CHECK(sheet.count(), count);
-            CHECK(sheet.capacity(), ve::next_power_of_2(count));
+            CHECK(sheet.capacity(), vql::next_power_of_2(count));
             CHECKT(!sheet.cell<bool_p>(i));
             CHECK(sheet.cell<int_p>(i), 0);
             CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), 0.f));
@@ -136,7 +136,7 @@ struct db_tests : public Cppunit
                 CHECK(sheet.push_back(row), i);
                 size_t count = i + 1;
                 CHECK(sheet.count(), count);
-                CHECK(sheet.capacity(), ve::next_power_of_2(count));
+                CHECK(sheet.capacity(), vql::next_power_of_2(count));
                 CHECKT(sheet.cell<bool_p>(i));
                 CHECK(sheet.cell<int_p>(i), 10);
                 CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), 100.f));
@@ -153,7 +153,7 @@ struct db_tests : public Cppunit
             }
             size_t count = i + 1;
             CHECK(sheet.count(), count);
-            CHECK(sheet.capacity(), ve::next_power_of_2(count));
+            CHECK(sheet.capacity(), vql::next_power_of_2(count));
             CHECK(sheet.cell<bool_p>(i), i % 2);
             CHECK(sheet.cell<int_p>(i), i);
             CHECKT(ve::fuzzy_eq(sheet.cell<float_p>(i), static_cast<float>(i)));
